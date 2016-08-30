@@ -35,6 +35,7 @@ class Connections(Base):
 
 class FlightDetails(Base):
     __tablename__ = 'flightdetails'
+
     id = Column(Integer, primary_key=True )
     flightNb = Column(Integer, ForeignKey('connections.flightNb'))
     departure_time = Column(DateTime, nullable=False)
@@ -42,8 +43,7 @@ class FlightDetails(Base):
     price = Column(Integer, nullable=False)
     currency = Column(String(5), nullable=False)
     isMacStation = Column(Boolean, nullable=False)
-    isAirportChange = Column(Boolean, nullable=False)
-
+    isAirportChanged = Column(Boolean, nullable=False)
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')
