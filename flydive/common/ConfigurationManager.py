@@ -47,6 +47,16 @@ class CfgMgr:
                 'type': 'sqlite'
             }
 
+            config['LOGGER'] = {
+                'config_name': 'logger.cfg',
+                'config_dir': 'configs',
+                'debug': 'off'
+            }
+
+            config['DEBUGGING'] = {
+                'status': 'online'
+            }
+
             with open(self.path,'w') as configfile:
                 config.write(configfile)
 
