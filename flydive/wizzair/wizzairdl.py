@@ -1,7 +1,10 @@
 from common import HttpManager
 from wizzair.commonUrls import CommonData
+from common.ConfigurationManager import CfgMgr
+from common import LogManager as lm
 import re
 import json
+import os
 
 
 class WizzairDl(object):
@@ -10,10 +13,24 @@ class WizzairDl(object):
 
     def __init__(self):
         """TODO: to be defined1. """
+        self.cfg = CfgMgr().getConfig()
         self.__fetchAirportAndConnections()
 
+    def log(self, message=''):
+        lm.debug("WizzairDl: {0}".format(message))
+
     def __fetchAirportAndConnections(self):
-        httpcontent = HttpManager.getPage(CommonData.AIRPORTS.value)
+        self.log("fetchAirportAndConnections")
+
+        if self.cfg['DEBUGGING']['state'] == 'online':
+            httpcontent = HttpManager.getPage(CommonData.AIRPORTS.value).text
+        else:
+            filePath = os.path.join(os.path.dirname(os.path.realpath(__file__)),'../../tests/wizzair/testdata/Markets.json')
+
+            with open(filePath, 'r') as f:
+                httpcontent = f.read()
+            f.close()
+
         self._airports = self.__getAirports(httpcontent)
         self._connections = self.__getAirportConnections(httpcontent)
 
@@ -24,8 +41,9 @@ class WizzairDl(object):
         :returns: TODO
 
         """
-        airports = re.findall(r'wizzAutocomplete.STATION.*?=\s*(.*?);', httpContent.text, re.DOTALL | re.MULTILINE)
-        return json.loads(airports[0], encoding=httpContent.encoding)
+        airports = re.findall(r'wizzAutocomplete.STATION.*?=\s*(.*?);', httpContent, re.DOTALL | re.MULTILINE)
+        # return json.loads(airports[0], encoding=httpContent.encoding)
+        return json.loads(airports[0])
 
 
     def __getAirportConnections(self, httpContent):
@@ -35,7 +53,7 @@ class WizzairDl(object):
         :returns: TODO
 
         """
-        connections = re.findall(r'wizzAutocomplete.MARKETINFO.*?=\s*(.*?);', httpContent.text, re.DOTALL | re.MULTILINE)
+        connections = re.findall(r'wizzAutocomplete.MARKETINFO.*?=\s*(.*?);', httpContent, re.DOTALL | re.MULTILINE)
         return json.loads(connections[0].replace("'",""))
 
     def getAirports(self, pattern=''):
