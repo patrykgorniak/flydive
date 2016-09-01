@@ -7,16 +7,19 @@ from common.tools import printJSON
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as LogMgr
 
-def setupApp():
-    LogMgr.init()
+
+def setupLogger(cfg):
+    LogMgr.init(dirname=cfg['config_dir'], configFileName=cfg['config_name'])
+    # LogMgr.init()
 
 
 def main():
-    cfg = CfgMgr()
+    cfg = CfgMgr().getConfig()
+    setupLogger(cfg['LOGGER'])
 
-#    wiz = WizzairPlugin();
-#    printJSON(wiz.getAirports())
-#    printJSON(wiz.getConnections())
+    wiz = WizzairPlugin();
+    wiz.fetchAirports()
+   # printJSON(wiz.fetchConnections())
 
 
     # httpcontent = HttpManager.getPage(CommonData.AIRPORTS.value)
