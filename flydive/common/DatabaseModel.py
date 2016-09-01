@@ -2,7 +2,6 @@ import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
@@ -20,9 +19,9 @@ class Airport(Base):
 
     iata = Column(String(10), primary_key=True)
     name = Column(String(100), nullable=False)
-    latitude =  Column(String(50), nullable=False)
-    longitute = Column(String(50), nullable=False)
-    country = Column(String(150), nullable=False)
+    latitude =  Column(String(50))
+    longitude = Column(String(50))
+    country = Column(String(150))
 
 class Connections(Base):
     __tablename__ = 'connections'
@@ -44,6 +43,7 @@ class FlightDetails(Base):
     currency = Column(String(5), nullable=False)
     isMacStation = Column(Boolean, nullable=False)
     isAirportChanged = Column(Boolean, nullable=False)
+
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')
