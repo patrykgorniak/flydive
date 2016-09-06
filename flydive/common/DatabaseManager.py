@@ -47,7 +47,16 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
-        pass
+        if not self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata }):
+            self.__addAndCommit(connection)
+        else:
+            self.log("Object exists in DB")
+
+    def queryConnections(self, filter_by = {}):
+        session = self.Session()
+        query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
+
+        return query
 
     def addFlightDetails(self, flightDetails):
         """TODO: Docstring for addFlightDetails.
