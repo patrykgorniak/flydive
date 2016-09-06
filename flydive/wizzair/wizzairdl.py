@@ -10,7 +10,6 @@ import os
 class WizzairDl(object):
 
     """Docstring for WizzairDl. """
-
     def __init__(self):
         """TODO: to be defined1. """
         self.cfg = CfgMgr().getConfig()
@@ -18,6 +17,13 @@ class WizzairDl(object):
 
     def log(self, message=''):
         lm.debug("WizzairDl: {0}".format(message))
+
+    def fetchFlightDetails(self):
+        """TODO: Docstring for __fetchFlightDetails.
+        :returns: TODO
+
+        """
+        pass
 
     def __fetchAirportAndConnections(self):
         self.log("fetchAirportAndConnections")
