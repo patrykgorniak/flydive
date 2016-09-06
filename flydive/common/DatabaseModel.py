@@ -26,7 +26,7 @@ class Airport(Base):
 class Connections(Base):
     __tablename__ = 'connections'
 
-    flightNb = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     src_iata = Column(String(10), nullable=False)
     dst_iata = Column(String(10), nullable=False)
     carrierCode = Column(String(10),ForeignKey('airline.carrierCode'))
@@ -36,7 +36,7 @@ class FlightDetails(Base):
     __tablename__ = 'flightdetails'
 
     id = Column(Integer, primary_key=True )
-    flightNb = Column(Integer, ForeignKey('connections.flightNb'))
+    flightNb = Column(Integer)#, ForeignKey('connections.flightNb'))
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     price = Column(Integer, nullable=False)
