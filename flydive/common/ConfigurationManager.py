@@ -57,6 +57,10 @@ class CfgMgr:
                 'status': 'online'
             }
 
+            config['FLIGHTS'] = {
+                'month_delta': 3
+            }
+
             with open(self.path,'w') as configfile:
                 config.write(configfile)
 
