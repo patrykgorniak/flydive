@@ -54,7 +54,8 @@ class DatabaseManager(object):
 
     def queryConnections(self, filter_by = {}):
         session = self.Session()
-        query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
+        query = session.query(Connections).filter_by(**filter_by)
+        # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
 
         return query
 

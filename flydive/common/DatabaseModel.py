@@ -36,7 +36,7 @@ class FlightDetails(Base):
     __tablename__ = 'flightdetails'
 
     id = Column(Integer, primary_key=True )
-    flightNb = Column(Integer)#, ForeignKey('connections.flightNb'))
+    id_connections = ForeignKey('connections.id')
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     price = Column(Integer, nullable=False)
