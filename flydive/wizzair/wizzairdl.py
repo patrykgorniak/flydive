@@ -27,12 +27,13 @@ class WizzairDl(object):
 
         url = CommonData.TimeTable.value
         url = url.format(src_iata, dst_iata, year, month)
-        lm.debug(url)
 
         if self.cfg['DEBUGGING']['state'] == 'online':
+            self.log("Get from: " + url)
             httpContent = HttpManager.getMethod(url)
         else:
             filePath = os.path.join(self.base, '{0}_{1}_{2}_{3}.json'.format(src_iata, dst_iata, month, year))
+            self.log("Get from: " + filePath)
             with open(filePath, 'r') as f:
                 httpContent = f.read()
             f.close()
@@ -93,7 +94,7 @@ class WizzairDl(object):
         """
         return self._connections;
 
-    def __searchFlight(self, options={'src_iata':'WAW', 'dst_iata':'LTN', 'date':'2016-10-21'}):
+    def searchFlightDetails(self, options={'src_iata':'WAW', 'dst_iata':'LTN', 'date':'2016-10-21'}):
         """TODO: Docstring for __searchFlight.
 
         :options: TODO
@@ -117,4 +118,5 @@ class WizzairDl(object):
         }
 
         httpContent = HttpManager.postMethod(CommonData.Search.value, params)
+        return json.loads(httpContent)
 

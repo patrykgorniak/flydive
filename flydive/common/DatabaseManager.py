@@ -66,7 +66,10 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
-        pass
+        if not isinstance(flightDetails, FlightDetails):
+            raise ValueError
+
+        self.log("Adding flight: " + str(flightDetails))
         # if not self.__exists(flightDetails, { 'iata': airport.iata }):
         #     __addAndCommit(airport)
         # else:

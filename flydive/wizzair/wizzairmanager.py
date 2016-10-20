@@ -112,7 +112,7 @@ class WizzairPlugin(object):
             connections = self.db.queryConnections()
 
         for c in connections:
-            self.log(c)
+            self.log('Connection: {0}'.format(c))
             for delta in range(monthDelta):
                 date = self.currentDate + monthdelta(delta)
                 details = {'src_iata': c['src_iata'], 'dst_iata': c['dst_iata'], 'month': date.month,
@@ -125,6 +125,7 @@ class WizzairPlugin(object):
                 if flight['Flights']:
                     self.__addFlightDetails(flight)
 
+
     def __addFlightDetails(self, flight):
         """TODO: Docstring for __addFlightDetails.
 
@@ -132,16 +133,19 @@ class WizzairPlugin(object):
         :returns: TODO
 
         """
-        pass
-        # print(flight)
-        # print()
+        if len(flight['Flights']) == 1:
+            self.db.addFlightDetails(flight)
+        else:
+            pass # Search for updated prices for flights from-to
+            # self.__addFlightDetails(flight)
 
-    def __fetchFlightDetails(self, ):
+    def __fetchFlightDetails(self, flight):
 
         """TODO: Docstring for downloadData.
         :returns: TODO
 
         """
-        for connection in self.db.queryConnections():
-            print(connection.id);
+        return self._dlMgr.searchFlightDetails(flight)
+        # for connection in self.db.queryConnections():
+        #     print(connection.id);
             # print("{0} {1}".format(src, dst))
