@@ -33,6 +33,8 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
+        if not isinstance(airport, Airport):
+            raise TypeError('airport is not type of Airport.')
 
         if not self.__exists(airport, { 'iata': airport.iata }):
             self.log("Added airport: IATA - {0}".format(airport.iata))
@@ -47,6 +49,9 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
+        if not isinstance(connection, Connections):
+            raise TypeError('connection is not object of Connections.')
+
         if not self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata }):
             self.__addAndCommit(connection)
         else:
@@ -67,7 +72,7 @@ class DatabaseManager(object):
 
         """
         if not isinstance(flightDetails, FlightDetails):
-            raise ValueError
+            raise TypeError('fightDetails is not object of FlightDetails.')
 
         self.log("Adding flight: " + str(flightDetails))
         # if not self.__exists(flightDetails, { 'iata': airport.iata }):
@@ -82,6 +87,9 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
+        if not isinstance(airline, Airline):
+            raise TypeError('airline is not type of Airline.')
+
         if not self.__exists(airline, { 'carrierCode': airline.carrierCode }):
             self.__addAndCommit(airline)
         else:
