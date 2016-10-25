@@ -43,26 +43,34 @@ class DatabaseManager(object):
             self.log("Airport {0} already exists in DB".format(airport.iata))
 
     def addConnection(self, connection):
-        """TODO: Docstring for addConnection.
+        """Add connection to the database.
 
-        :connection: TODO
-        :returns: TODO
-
+        :connection: Connections object from DatabaseModel
+        :returns: connection ID
         """
         if not isinstance(connection, Connections):
             raise TypeError('connection is not object of Connections.')
+        
+        inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata })
 
-        if not self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata }):
-            self.__addAndCommit(connection)
+        if not inDb:
+            self.log("Add connection from {0} to {1}".format(connection.src_iata, connection.dst_iata))
+            return self.__addAndCommit(connection).id
         else:
-            self.log("Object exists in DB")
+            self.log("Connection from {0} to {1} exists in DB".format(connection.src_iata, connection.dst_iata))
+            return inDb.id
 
     def queryConnections(self, filter_by = {}):
-        session = self.Session()
-        query = session.query(Connections).filter_by(**filter_by)
-        # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
+        """Query connections by given filter
 
-        return query
+        :filter_by: filtering criterion from DatabaseModel.Connecions type
+        :returns: connection list
+        """
+
+        session = self.Session()
+        connectionsList = session.query(Connections).filter_by(**filter_by)
+        # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
+        return connectionList
 
     def addFlightDetails(self, flightDetails):
         """TODO: Docstring for addFlightDetails.
@@ -75,10 +83,10 @@ class DatabaseManager(object):
             raise TypeError('fightDetails is not object of FlightDetails.')
 
         self.log("Adding flight: " + str(flightDetails))
-        # if not self.__exists(flightDetails, { 'iata': airport.iata }):
-        #     __addAndCommit(airport)
-        # else:
-        #     print("Object exists in DB")
+        if not self.__exists(flightDetails, { 'departure_DateTime': flightDetails.departure_DateTime }):
+            self.__addAndCommit(flightDetails)
+        else:
+            self.log("Object exists in DB")
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.
@@ -90,10 +98,14 @@ class DatabaseManager(object):
         if not isinstance(airline, Airline):
             raise TypeError('airline is not type of Airline.')
 
-        if not self.__exists(airline, { 'carrierCode': airline.carrierCode }):
-            self.__addAndCommit(airline)
+        inDb = self.__exists(airline, { 'carrierCode': airline.carrierCode })
+
+        if not inDb:
+            self.log("Adding new airline: " + airline.carrierCode)
+            return self.__addAndCommit(airline).carrierCode
         else:
-            self.log("Object exists in DB")
+            self.log("Airline {0} exists in DB".format(airline.carrierCode))
+            return inDb.carrierCode
 
     def __createDatabaseModel(self):
         """TODO: Docstring for __createModel.
@@ -112,6 +124,7 @@ class DatabaseManager(object):
         session = self.Session()
         session.add(data)
         session.commit()
+        return data
 
     def __exists(self, entry, filtered_by):
         """TODO: Docstring for function.
@@ -121,7 +134,8 @@ class DatabaseManager(object):
 
         """
         session = self.Session()
-        return not session.query(type(entry)).filter_by(**filtered_by).first()==None
+        data = session.query(type(entry)).filter_by(**filtered_by).first()
+        return data
 
 def main():
     dbMgr = DatabaseManager('flydive', 'sqlite')

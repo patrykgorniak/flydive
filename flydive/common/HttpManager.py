@@ -5,7 +5,7 @@ def getMethod(url, params = {}):
 
     :url: TODO
     :params: TODO
-    :returns: 
+    :returns:
 
     """
     r = requests.get(url)
@@ -19,7 +19,7 @@ def postMethod(url, json_data = {}):
 
     :url: TODO
     :params: TODO
-    :returns: 
+    :returns:
 
     """
     r = requests.post(url, json = json_data)

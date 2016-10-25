@@ -98,6 +98,7 @@ class WizzairDl(object):
         """TODO: Docstring for __searchFlight.
 
         :options: TODO
+        : {'src_iata':'': TODO
         :'dst_iata':'': TODO
         :'date':''}: TODO
         :returns: TODO

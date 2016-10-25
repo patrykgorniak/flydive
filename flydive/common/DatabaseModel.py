@@ -1,7 +1,7 @@
 import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey, Float
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
@@ -36,14 +36,14 @@ class FlightDetails(Base):
     __tablename__ = 'flightdetails'
 
     id = Column(Integer, primary_key=True )
-    id_connections = ForeignKey('connections.id')
-    departure_time = Column(DateTime, nullable=False)
-    arrival_time = Column(DateTime, nullable=False)
-    price = Column(Integer, nullable=False)
+    id_connections = Column(Integer, ForeignKey('connections.id'), nullable = False)
+    departure_DateTime = Column(DateTime, nullable=False)
+    arrival_DateTime = Column(DateTime, nullable=False)
+    price = Column(Float, nullable=False)
+    flightNumber = Column(Integer, nullable = False)
     currency = Column(String(5), nullable=False)
     isMacStation = Column(Boolean, nullable=False)
     isAirportChanged = Column(Boolean, nullable=False)
-
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')
