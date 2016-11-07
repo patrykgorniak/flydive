@@ -32,6 +32,20 @@ class Connections(Base):
     carrierCode = Column(String(10),ForeignKey('airline.carrierCode'))
     updated = Column(DateTime, nullable=False, default = func.now())
 
+    def to_dict(self):
+        """TODO: Docstring for to_dict.
+        :returns: TODO
+
+        """
+        #TODO: To finish this function
+
+        dict = {  }
+        for (k, v) in self.__dict__:
+            if k != __tablename__:
+                if v:
+                    dict.append(k,v);
+        return dict
+
 class FlightDetails(Base):
     __tablename__ = 'flightdetails'
 

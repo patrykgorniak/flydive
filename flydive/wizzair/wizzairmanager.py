@@ -41,6 +41,30 @@ class WizzairPlugin(object):
         self.__fetchAndAddAirports()
         self.__fetchAndAddConnections()
 
+        con = Connections(src_iata='WAW')
+        connections = self.db.queryFilteredConnections(con)
+
+        for c in connections:
+            print(c.src_iata)
+        date_from = datetime.datetime.now()
+        date_to = datetime.datetime.now()
+        # self.__fetchAndAddFlightDetails(connections, date_from, date_to)
+
+
+
+    def __fetchAndAddFlightDetails(self, connections, datetime_from, datetime_to):
+        """TODO: Docstring for __fetchAndAddFlightDetails.
+
+        :connections: TODO
+        :datetime_from: TODO
+        :datetime_to: TODO
+        :returns: TODO
+
+        """
+        if len(connections) == 0:
+            raise ValueError('Connections are empty')
+
+
     def __fetchAndAddConnections(self):
         """TODO: Docstring for getConnections.
         :returns: TODO
@@ -173,7 +197,7 @@ class WizzairPlugin(object):
         :returns: TODO
 
         """
-        if len(flight['Flights']) == 1:
+        if len(flight['Flights']) == 0:
             flightObj = self.__convertToFlightDetailsObject(flight, connection_ID)
             self.db.addFlightDetails(flightObj)
         else:

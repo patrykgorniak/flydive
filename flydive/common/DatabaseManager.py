@@ -70,7 +70,14 @@ class DatabaseManager(object):
         session = self.Session()
         connectionsList = session.query(Connections).filter_by(**filter_by)
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
-        return connectionList
+        return connectionsList
+
+    def queryFilteredConnections(self, connection):
+        session = self.Session()
+        print(connection.to_dict())
+        connectionsList = session.query(Connections).filter_by(connection.to_dict())
+        # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
+        return connectionsList
 
     def addFlightDetails(self, flightDetails):
         """TODO: Docstring for addFlightDetails.
