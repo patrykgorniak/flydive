@@ -45,7 +45,7 @@ class WizzairPlugin(object):
         connections = self.db.queryFilteredConnections(con)
 
         for c in connections:
-            print(c.src_iata)
+            print(c.src_iata + " " + c.dst_iata)
         date_from = datetime.datetime.now()
         date_to = datetime.datetime.now()
         # self.__fetchAndAddFlightDetails(connections, date_from, date_to)

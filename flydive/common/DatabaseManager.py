@@ -74,8 +74,7 @@ class DatabaseManager(object):
 
     def queryFilteredConnections(self, connection):
         session = self.Session()
-        print(connection.to_dict())
-        connectionsList = session.query(Connections).filter_by(connection.to_dict())
+        connectionsList = session.query(Connections).filter_by(**(connection.to_dict()))
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 

@@ -6,6 +6,16 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+class Helper:
+    def to_dict(self):
+        """TODO: Docstring for to_dict.
+        :returns: TODO
+
+        """
+        dict = self.__dict__
+        del dict['_sa_instance_state']
+        return dict
+
 class Airline(Base):
     __tablename__ = 'airline'
 
@@ -23,7 +33,7 @@ class Airport(Base):
     longitude = Column(String(50))
     country = Column(String(150))
 
-class Connections(Base):
+class Connections(Base, Helper):
     __tablename__ = 'connections'
 
     id = Column(Integer, primary_key=True)
@@ -32,19 +42,14 @@ class Connections(Base):
     carrierCode = Column(String(10),ForeignKey('airline.carrierCode'))
     updated = Column(DateTime, nullable=False, default = func.now())
 
-    def to_dict(self):
-        """TODO: Docstring for to_dict.
-        :returns: TODO
+    # def to_dict(self):
+    #     """TODO: Docstring for to_dict.
+    #     :returns: TODO
 
-        """
-        #TODO: To finish this function
-
-        dict = {  }
-        for (k, v) in self.__dict__:
-            if k != __tablename__:
-                if v:
-                    dict.append(k,v);
-        return dict
+    #     """
+    #     dict = self.__dict__
+    #     del dict['_sa_instance_state']
+    #     return dict
 
 class FlightDetails(Base):
     __tablename__ = 'flightdetails'
@@ -67,3 +72,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
