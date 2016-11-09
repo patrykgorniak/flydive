@@ -41,14 +41,15 @@ class WizzairPlugin(object):
         self.__fetchAndAddAirports()
         self.__fetchAndAddConnections()
 
-        con = Connections(src_iata='WAW')
+        con = Connections()
         connections = self.db.queryFilteredConnections(con)
 
-        for c in connections:
-            print(c.src_iata + " " + c.dst_iata)
         date_from = datetime.datetime.now()
         date_to = datetime.datetime.now()
-        # self.__fetchAndAddFlightDetails(connections, date_from, date_to)
+        oneSideConnections = self.filterConnectionsOneDirection(connections);
+        # for c in oneSideConnections:
+        #     print(c)
+        self.__fetchAndAddFlightDetails(connections, date_from, date_to)
 
 
 
@@ -63,6 +64,7 @@ class WizzairPlugin(object):
         """
         if len(connections) == 0:
             raise ValueError('Connections are empty')
+
 
 
     def __fetchAndAddConnections(self):
@@ -152,10 +154,11 @@ class WizzairPlugin(object):
         """
         oneDirectionConnection = []
         for c in connections:
-            if {'src_iata':c['src_iata'], 'dst_iata':c['dst_iata']} not in oneDirectionConnction:
-                oneDirection.append({'src_iata':c['src_iata'], 'dst_iata':c['dst_iata']})
+            c_return = Connections(src_iata=c.dst_iata, dst_iata=c.src_iata)
+            if not c or not c_return in oneDirectionConnection:
+                oneDirectionConnection.append(c)
 
-        print(oneDirectionConnction)
+        return oneDirectionConnection
 
 
     def __fetchFlightTimeTable(self, monthDelta, connection):
