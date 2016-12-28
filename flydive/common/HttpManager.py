@@ -1,4 +1,5 @@
 import requests
+import time
 
 def getMethod(url, params = {}):
     """Downloads page from url using passed params
@@ -12,6 +13,7 @@ def getMethod(url, params = {}):
     if (r.status_code == requests.codes.ok):
         return r;
     else:
+        raise AssertionError('Post method error!')
         return None
 
 def postMethod(url, json_data = {}):
@@ -22,8 +24,15 @@ def postMethod(url, json_data = {}):
     :returns:
 
     """
+
     r = requests.post(url, json = json_data)
     if (r.status_code == requests.codes.ok):
         return r;
     else:
-        return None
+        time.sleep(60)
+        r = requests.post(url, json = json_data)
+        if (r.status_code == requests.codes.ok):
+            return r;
+        else:
+            raise AssertionError('Post method error!')
+            return None

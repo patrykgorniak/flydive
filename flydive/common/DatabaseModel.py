@@ -3,17 +3,20 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, ForeignKey, Float
 from sqlalchemy.orm import sessionmaker
+import copy
 
 Base = declarative_base()
 
 class Helper:
+    remove = ['_sa_instance_state']
     def to_dict(self):
         """TODO: Docstring for to_dict.
         :returns: TODO
 
         """
-        dict = self.__dict__
-        del dict['_sa_instance_state']
+        dict = copy.deepcopy(self.__dict__)
+        for key in self.remove:
+            del dict[key]
         return dict
 
 class Airline(Base):
@@ -81,10 +84,16 @@ class FlightDetails(Base):
     currency = Column(String(5), nullable=False)
     isMacStation = Column(Boolean, nullable=False)
     isAirportChanged = Column(Boolean, nullable=False)
+    inDC = Column(Boolean, nullable=False)
+    availableCount = Column(Integer, nullable=True)
+    # Helper.remove.extend(['src_iata', 'dst_iata'])
+
+    #Helpers
+    src_iata = ""
+    dst_iata = ""
 
     def __str__(self):
-        return """FlightDetails: ID: {0}, ID_CON: {1}, depart_time: {2}, arrival_time: {3}, price: {4}, flight nb: {5},
-                currency: {6}, isMacStation: {7}, IsAirportChanged: {8}""".format(self.id,
+        return """FlightDetails: \nID: {0}, ID_CON: {1}, depart_time: {2}, arrival_time: {3}, price: {4}, flight nb:{5}, currency: {6}, isMacStation: {7}, IsAirportChanged: {8} from: {9} to {10}, CLUB: {11}""".format(self.id,
                                                                                   self.id_connections,
                                                                                   self.departure_DateTime,
                                                                                   self.arrival_DateTime,
@@ -92,7 +101,11 @@ class FlightDetails(Base):
                                                                                   self.flightNumber,
                                                                                   self.currency,
                                                                                   self.isMacStation,
-                                                                                  self.isAirportChanged)
+                                                                                  self.isAirportChanged,
+                                                                                  self.src_iata,
+                                                                                  self.dst_iata,
+                                                                                  self.inDC,
+                                                                                  self.availableCount)
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')

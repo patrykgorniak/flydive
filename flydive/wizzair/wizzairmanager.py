@@ -7,6 +7,7 @@ from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
 from common import tools
 from monthdelta import monthdelta
+from common.SessionManager import SessionManager
 import datetime
 import locale
 
@@ -24,6 +25,7 @@ class WizzairPlugin(object):
         self.db = DatabaseManager(self.cfg['DATABASE']['name'], self.cfg['DATABASE']['type'])
         self.month_delta =int(self.cfg['FLIGHTS']['month_delta'])
         self.currentDate = datetime.datetime.now()
+        self.session = SessionManager(self.airline_name)
 
         self.__initAirline()
 
@@ -36,22 +38,50 @@ class WizzairPlugin(object):
         :returns: TODO
 
         """
-        testFilter = self.__getTestConnections()
+        connections = []
+        proceedList = []
+        try:
+            # date_from = datetime.datetime(2016,12,10) # this is only for test
+            date_from = datetime.datetime.now()
 
-        self.__fetchAndAddAirports()
-        self.__fetchAndAddConnections()
+            self.__fetchAndAddAirports()
+            self.__fetchAndAddConnections()
 
-        con = Connections()
-        connections = self.db.queryFilteredConnections(con)
+            if self.session.isSaved():
+                connections.extend(self.session.restoreSession())
+                # self.session.close()
+            else:
+                connections.extend(self.db.getConnections())
+                # con = Connections(src_iata='LTN', dst_iata='WAW')
+                # connections.extend(self.db.getConnections(con))
 
-        date_from = datetime.datetime.now()
-        date_to = datetime.datetime.now()
-        oneSideConnections = self.filterConnectionsOneDirection(connections);
-        # for c in oneSideConnections:
-        #     print(c)
-        self.__fetchAndAddFlightDetails(connections, date_from, date_to)
+            oneWayIdxList = self.getOneWayConnectionIndexList(connections);
 
+            assert (len(oneWayIdxList)*2) == len(connections)
 
+            for i, idx in enumerate(oneWayIdxList):
+                for delta in range(self.month_delta):
+                    time = date_from + monthdelta(delta)
+
+                    timeTableList = self.__getTimeTable(time, connections[idx]) #get timetable for given year-month
+                    for flight in timeTableList:
+                        if flight.date > date_from and flight.date < datetime.datetime(2017,1,2):
+                            list = self.__getFlightDetails(flight)
+                            for item in list:
+                                item.id_connections = [x for x in connections if x==item][0].id
+                                lm.debug(item)
+                                self.db.addFlightDetails(item)
+                proceedList.append(connections[idx])
+                lm.debug("Status: {} of {} - ({}%)".format(i, len(oneWayIdxList), i/len(oneWayIdxList)*100))
+
+            self.log("Total time: {}".format(datetime.datetime.now() - date_from))
+        except:
+
+            lm.debug("Session dumped!")
+            connectionsLeftList = []
+            connectionsLeftList.append([x for x in connections if x not in proceedList])
+            self.session.save(connectionsLeftList)
+            raise
 
     def __fetchAndAddFlightDetails(self, connections, datetime_from, datetime_to):
         """TODO: Docstring for __fetchAndAddFlightDetails.
@@ -64,8 +94,18 @@ class WizzairPlugin(object):
         """
         if len(connections) == 0:
             raise ValueError('Connections are empty')
+        for delta in range(monthDelta):
+            date = self.currentDate + monthdelta(delta)
 
+    def __getFlightDetails(self, flight):
+        """ Gets details of flight
 
+        :flight: TODO
+        :returns: TODO
+
+        """
+        flightDetailsJSON = self._dlMgr.getFlightDetails(flight)
+        return self.parser.extractJSONFlightDetails(flightDetailsJSON)
 
     def __fetchAndAddConnections(self):
         """TODO: Docstring for getConnections.
@@ -73,10 +113,10 @@ class WizzairPlugin(object):
 
         """
         self.log("Fetching and adding connections");
-        testFilter = self.__generateConnections()
+        # testFilter = self.__generateConnections()
 
         for connectionsFromAirport in self._dlMgr.getConnections():
-            self.__unpackAndAddToDb(connectionsFromAirport, testFilter)
+            self.__unpackAndAddToDb(connectionsFromAirport)
 
     def __getTestConnections(self):
         """TODO: Docstring for __getTestConnections.
@@ -117,6 +157,7 @@ class WizzairPlugin(object):
 
         """
         connectionList = self.parser.extractJSONConnectionToList(connection)
+
         for c in connectionList:
             c.id = self.db.addConnection(c)
             #TODO: Added connections to DB, filter OneDirectionConnection
@@ -130,26 +171,40 @@ class WizzairPlugin(object):
 
 
     def __fetchAndAddAirports(self):
-        """TODO: Docstring for getAirports.
-
-        :returns: TODO
-
+        """
         """
         self.log("Fetching and adding airports");
-        for row in self._dlMgr.getAirports():
-            if row is not None:
-                airport = Airport(iata=row['IATA'], 
-                                  name=row['ShortName'],
-                                  latitude=row['Latitude'], 
-                                  longitude=row['Longitude'], 
-                                  country='N/A')
-                self.db.addAirport(airport)
 
-    def filterConnectionsOneDirection(self, connections):
-        """TODO: Docstring for filterConnectionsOneDirection.
+        airports = self.parser.extractJSONAirportsToList(self._dlMgr.getAirports())
+        for airport in airports:
+            self.db.addAirport(airport)
 
-        :connections: TODO
-        :returns: TODO
+    def getOneWayConnectionIndexList(self, connectionList):
+        """ Extracts one way connections from list of connections.
+
+        :connectionList: list of Connections
+        :returns: list of indexes of one way connections in connection list
+
+        """
+        if not isinstance(connectionList[0], Connections):
+            raise TypeError
+
+        oneWayIndexes = set()
+        tmplist = []
+
+        for idx, c in enumerate(connectionList):
+            c_return = Connections(src_iata=c.dst_iata, dst_iata=c.src_iata)
+            if not c or not c_return in tmplist:
+                oneWayIndexes.add(idx)
+                tmplist.append(c)
+
+        return list(oneWayIndexes)
+
+    def extractOneWayConnections(self, connections):
+        """ Extracts one way connections from list of connections.
+
+        :connections: list of connections
+        :returns: list of indexes of one way connections in connection list
 
         """
         oneDirectionConnection = []
@@ -158,40 +213,26 @@ class WizzairPlugin(object):
             if not c or not c_return in oneDirectionConnection:
                 oneDirectionConnection.append(c)
 
-        return oneDirectionConnection
+        return oneDirectionConnectiony
 
+    def __getTimeTable(self, date, connection):
+        """ Gets monthly time table for connections and date
 
-    def __fetchFlightTimeTable(self, monthDelta, connection):
-        """TODO: Docstring for __fetchTimeTable.
-
-        :monthDelta: TODO
-        :returns: TODO
+        :date: date (with year and month) for time table
+        :connection: connection we need time table for
+        :returns: list of TimeTables for month
 
         """
-        flightsTimeTableDetails = []
+        self.log('Connection: {0}'.format(connection))
+        details = {'src_iata': connection.src_iata,
+                   'dst_iata': connection.dst_iata,
+                   'month': date.month,
+                   'year': date.year
+                   }
 
-        if connection is not None:
-            connections = [connection.__dict__]
-            self.log(connections)
-        else:
-            connections = self.db.queryConnections()
+        timeTableJSON = self._dlMgr.getTimeTable(details)
+        return self.parser.extractJSONTimeTable(timeTableJSON)
 
-        for c in connections:
-            self.log('Connection: {0}'.format(c))
-            for delta in range(monthDelta):
-                date = self.currentDate + monthdelta(delta)
-                details = {'src_iata': c['src_iata'], 
-                           'dst_iata': c['dst_iata'], 
-                           'month': date.month,
-                           'year': date.year 
-                           }
-                flightDetails = self._dlMgr.fetchFlightDetails(details)
-                flightsTimeTableDetails.append(flightDetails)
-
-        for flightsInMonth in flightsTimeTableDetails:
-            for flight in flightsInMonth:
-                if flight['Flights']: # check if there are flights that day
-                    self.__addFlightDetails(flight, connection.id)
 
     def __addFlightDetails(self, flight, connection_ID):
         """TODO: Docstring for __addFlightDetails.

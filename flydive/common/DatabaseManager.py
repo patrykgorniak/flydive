@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists
-from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base 
+from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base
 from common import LogManager as lm
 
 class DatabaseManager(object):
@@ -50,7 +50,7 @@ class DatabaseManager(object):
         """
         if not isinstance(connection, Connections):
             raise TypeError('connection is not object of Connections.')
-        
+
         inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata })
 
         if not inDb:
@@ -72,7 +72,14 @@ class DatabaseManager(object):
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 
-    def queryFilteredConnections(self, connection):
+    def getConnections(self, connection = Connections()):
+        """ Query connections
+
+        :connection: default parameter. Allows to get specific connections.
+        :returns: list with matched connections
+
+        """
+
         session = self.Session()
         connectionsList = session.query(Connections).filter_by(**(connection.to_dict()))
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
@@ -89,7 +96,10 @@ class DatabaseManager(object):
             raise TypeError('fightDetails is not object of FlightDetails.')
 
         self.log("Adding flight: " + str(flightDetails))
-        if not self.__exists(flightDetails, { 'departure_DateTime': flightDetails.departure_DateTime }):
+        if not self.__exists(flightDetails, {'id_connections' : flightDetails.id_connections,
+                                             'flightNumber': flightDetails.flightNumber,
+                                             'inDC': flightDetails.inDC,
+                                             'departure_DateTime': flightDetails.departure_DateTime}):
             self.__addAndCommit(flightDetails)
         else:
             self.log("Object exists in DB")

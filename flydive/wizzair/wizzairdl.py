@@ -1,5 +1,6 @@
 from common import HttpManager
 from wizzair.commonUrls import CommonData
+from wizzair.commonUrls import TimeTable
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
 import re
@@ -19,7 +20,11 @@ class WizzairDl(object):
     def log(self, message=''):
         lm.debug("WizzairDl: {0}".format(message))
 
-    def fetchFlightDetails(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"" }):
+    def getTimeTable(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"" }):
+        """ Downloads monthly timetable for connection details
+        :details: connection details with src_iata, dst_iata, year and month 
+        :returns: content in json format from service
+        """
         src_iata = details['src_iata']
         dst_iata = details['dst_iata']
         year = details['year']
@@ -28,11 +33,13 @@ class WizzairDl(object):
         url = CommonData.TimeTable.value
         url = url.format(src_iata, dst_iata, year, month)
 
+        filePath = os.path.join(self.base, '{0}_{1}_{2}_{3}.json'.format(src_iata, dst_iata, month, year))
+
         if self.cfg['DEBUGGING']['state'] == 'online':
             self.log("Get from: " + url)
-            httpContent = HttpManager.getMethod(url)
+            httpContent = HttpManager.getMethod(url).text
+            self.writeToFile(filePath, httpContent)
         else:
-            filePath = os.path.join(self.base, '{0}_{1}_{2}_{3}.json'.format(src_iata, dst_iata, month, year))
             self.log("Get from: " + filePath)
             with open(filePath, 'r') as f:
                 httpContent = f.read()
@@ -94,7 +101,7 @@ class WizzairDl(object):
         """
         return self._connections;
 
-    def searchFlightDetails(self, options={'src_iata':'WAW', 'dst_iata':'LTN', 'date':'2016-10-21'}):
+    def getFlightDetails(self, flight):
         """TODO: Docstring for __searchFlight.
 
         :options: TODO
@@ -104,6 +111,9 @@ class WizzairDl(object):
         :returns: TODO
 
         """
+        if type(flight) is not TimeTable:
+            raise TypeError('flight is not a TimeTable type')
+
         params = {
             'adultCount': 1,
             'infantCount': 0,
@@ -111,13 +121,41 @@ class WizzairDl(object):
             'wdc': 1,
             'flightList': [
                 {
-                    'arrivalStation': options['dst_iata'],
-                    'departureStation': options['src_iata'],
-                    'departureDate': options['date']
+                    'departureStation': flight.src,
+                    'arrivalStation': flight.dst,
+                    'departureDate': flight.date.strftime("%Y-%m-%d")
+                },
+                {
+                    'departureStation': flight.dst,
+                    'arrivalStation': flight.src,
+                    'departureDate': flight.date.strftime("%Y-%m-%d")
                 }
             ]
         }
 
-        httpContent = HttpManager.postMethod(CommonData.Search.value, params)
+        filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))
+        if self.cfg['DEBUGGING']['state'] == 'online':
+            httpContent = HttpManager.postMethod(CommonData.Search.value, params).text
+            self.writeToFile(filePath, httpContent)
+        else:
+            filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))
+            self.log("Get from: " + filePath)
+            with open(filePath, 'r') as f:
+                httpContent = f.read()
+            f.close()
+
         return json.loads(httpContent)
+
+    def writeToFile(self, filePath, httpContent):
+        """TODO: Docstring for writeToFile.
+
+        :filepath: TODO
+        :data: TODO
+        :returns: TODO
+
+        """
+        self.log("Write to: " + filePath)
+        with open(filePath, 'w') as f:
+            f.write(httpContent)
+        f.close()
 
