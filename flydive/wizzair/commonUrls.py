@@ -1,9 +1,10 @@
 from enum import Enum
 
-class CommonData(Enum):
+class CommonData():
+    MAIN = "http://wizzair.com/"
     AIRPORTS = "https://cdn.static.wizzair.com/pl-PL/Markets.js"
     TimeTable = "https://cdn.static.wizzair.com/pl-PL/TimeTableAjax?departureIATA={0}&arrivalIATA={1}&year={2}&month={3}"
-    Search = "https://be.wizzair.com/3.8.0/Api/search/search"
+    Search = "{}/search/search"
 
 class TimeTable:
     """docstring for TimeTable"""

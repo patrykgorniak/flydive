@@ -15,10 +15,19 @@ class WizzairDl(object):
         """TODO: to be defined1. """
         self.cfg = CfgMgr().getConfig()
         self.base = os.path.join(os.path.dirname(os.path.realpath(__file__)),'../../tests/wizzair/testdata/')
+        self.__updateApiVersion()
         self.__fetchAirportAndConnections()
 
     def log(self, message=''):
         lm.debug("WizzairDl: {0}".format(message))
+
+    def __updateApiVersion(self):
+        content = HttpManager.getMethod(CommonData.MAIN).text
+        api_version = re.findall(r'var apiUrl =\s*(.*?);', content, re.DOTALL | re.MULTILINE)[0].replace('"','')
+        CommonData.Search = CommonData.Search.format(api_version)
+        self.log("Search api: {}".format(CommonData.Search))
+        return api_version
+
 
     def getTimeTable(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"" }):
         """ Downloads monthly timetable for connection details
@@ -51,7 +60,7 @@ class WizzairDl(object):
         self.log("fetchAirportAndConnections")
 
         if self.cfg['DEBUGGING']['state'] == 'online':
-            httpcontent = HttpManager.getMethod(CommonData.AIRPORTS.value).text
+            httpcontent = HttpManager.getMethod(CommonData.AIRPORTS).text
         else:
             filePath = os.path.join(self.base, 'Markets.json')
             with open(filePath, 'r') as f:
