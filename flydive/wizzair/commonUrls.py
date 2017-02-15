@@ -1,5 +1,3 @@
-from enum import Enum
-
 class CommonData():
     MAIN = "http://wizzair.com/"
     AIRPORTS = "https://cdn.static.wizzair.com/pl-PL/Markets.js"

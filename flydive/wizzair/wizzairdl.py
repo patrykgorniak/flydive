@@ -39,7 +39,7 @@ class WizzairDl(object):
         year = details['year']
         month = details['month']
 
-        url = CommonData.TimeTable.value
+        url = CommonData.TimeTable
         url = url.format(src_iata, dst_iata, year, month)
 
         filePath = os.path.join(self.base, '{0}_{1}_{2}_{3}.json'.format(src_iata, dst_iata, month, year))
@@ -110,16 +110,8 @@ class WizzairDl(object):
         """
         return self._connections;
 
-    def getFlightDetails(self, flight):
-        """TODO: Docstring for __searchFlight.
+    def packParamsToJSON(self, flight):
 
-        :options: TODO
-        : {'src_iata':'': TODO
-        :'dst_iata':'': TODO
-        :'date':''}: TODO
-        :returns: TODO
-
-        """
         if type(flight) is not TimeTable:
             raise TypeError('flight is not a TimeTable type')
 
@@ -141,10 +133,26 @@ class WizzairDl(object):
                 }
             ]
         }
+        return params
+
+    def getFlightDetails(self, flight):
+        """TODO: Docstring for __searchFlight.
+
+        :options: TODO
+        : {'src_iata':'': TODO
+        :'dst_iata':'': TODO
+        :'date':''}: TODO
+        :returns: TODO
+
+        """
+        if type(flight) is not TimeTable:
+            raise TypeError('flight is not a TimeTable type')
+
+        params = self.packParamsToJSON(flight)
 
         filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))
         if self.cfg['DEBUGGING']['state'] == 'online':
-            httpContent = HttpManager.postMethod(CommonData.Search.value, params).text
+            httpContent = HttpManager.postMethod(CommonData.Search, params).text
             self.writeToFile(filePath, httpContent)
         else:
             filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))

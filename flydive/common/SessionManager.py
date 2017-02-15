@@ -74,6 +74,7 @@ class SessionManager(object):
         :returns: TODO
 
         """
+        print(type(objs[0]))
         if type(objs[0]) is not Connections:
             raise TypeError("Object is not type of Connections")
         self.__save(objs)
