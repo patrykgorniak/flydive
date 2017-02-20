@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from sqlalchemy_utils import database_exists
 from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base
 from common import LogManager as lm
@@ -17,7 +18,10 @@ class DatabaseManager(object):
         self.database_name = database_name
         self.database_type = database_type
         self.database_uri = self.database_type + ':///' + self.database_name + '.' + self.database_type
-        self.engine = create_engine(self.database_uri)
+        self.engine = create_engine(self.database_uri, 
+                                    connect_args={'check_same_thread':False},
+                                    poolclass=StaticPool)
+                                    #echo=args.verbose_sql, poolclass=SingletonThreadPool)
         self.Session = sessionmaker(bind=self.engine)
 
         if not database_exists(self.database_uri):

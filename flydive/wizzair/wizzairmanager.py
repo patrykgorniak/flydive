@@ -15,9 +15,6 @@ import queue
 import threading
 
 class WizzairPlugin(object):
-
-    """Docstring for WizzairPlugin. """
-
     def __init__(self, asyncDlMgr = None):
         self.carrierCode = WizzData.carrierCode
         self.airline_name = WizzData.airline_name
@@ -43,14 +40,13 @@ class WizzairPlugin(object):
 
 
     def run(self):
-        """TODO: Docstring for run.
-        :returns: TODO
-
-        """
         self.connections = []
         proceedList = []
         # date_from = datetime.datetime(2016,12,10) # this is only for test
-        date_from = datetime.datetime.now()
+        delay_data = datetime.timedelta(days=7)
+        date_from = self.currentDate + delay_data;
+        date_to = date_from + monthdelta(self.month_delta)
+        self.log("Flights from: {} to {}".format(date_from, date_to))
 
         self.log("Fetch and add airports")
         self.__fetchAndAddAirports()
@@ -80,19 +76,16 @@ class WizzairPlugin(object):
 
                     timeTableList = self.__getTimeTable(time, self.connections[idx]) #get timetable for given year-month
                     for flight in timeTableList:
-                        if flight.date > date_from and flight.date < datetime.datetime(2017,2,18):
+                        if flight.date > date_from and flight.date <= date_to: #datetime.datetime(2017,2,18):
                             if self.asyncMode:
                                 self.__scheduleFlightDetails(flight)
                             else:
                                 list = self.__getFlightDetails(flight)
-                                for item in list:
-                                    item.id_connections = [x for x in self.connections if x==item][0].id
-                                    lm.debug(item)
-                                    self.db.addFlightDetails(item)
+                                self.handleFlightDetails(list)
                 proceedList.append(self.connections[idx])
-                lm.debug("Status: {} of {} - ({}%)".format(i, len(oneWayIdxList), i/len(oneWayIdxList)*100))
+                lm.debug("Status: {} of {} - ({}%)".format(i + 1, len(oneWayIdxList), (i+1)/len(oneWayIdxList)*100))
 
-            self.log("Total time: {}".format(datetime.datetime.now() - date_from))
+            self.log("Total time: {}".format(self.currentDate - datetime.datetime.now()))
         except:
 
             lm.debug("Session dumped!")
@@ -103,20 +96,6 @@ class WizzairPlugin(object):
             if(len(connectionsLeftList)):
                 self.session.save(connectionsLeftList)
             raise
-
-    def __fetchAndAddFlightDetails(self, connections, datetime_from, datetime_to):
-        """TODO: Docstring for __fetchAndAddFlightDetails.
-
-        :connections: TODO
-        :datetime_from: TODO
-        :datetime_to: TODO
-        :returns: TODO
-
-        """
-        if len(connections) == 0:
-            raise ValueError('Connections are empty')
-        for delta in range(monthDelta):
-            date = self.currentDate + monthdelta(delta)
 
     def __asyncGetFlightDetails(self, flight):
         flightDetailsJSON = self._dlMgr.getFlightDetails(flight)
@@ -192,14 +171,6 @@ class WizzairPlugin(object):
             c.id = self.db.addConnection(c)
             #TODO: Added connections to DB, filter OneDirectionConnection
 
-            # if filter_by:
-            #     if ASL['SC'] in filter_by:
-            #         if filter_by[ASL['SC']] == connection['DS']:
-            #             self.__fetchFlightTimeTable(self.month_delta, connections)
-            # else:
-            #     self.__fetchFlightTimeTable(self.month_delta, connections)
-
-
     def __fetchAndAddAirports(self):
         """
         """
@@ -230,20 +201,20 @@ class WizzairPlugin(object):
 
         return list(oneWayIndexes)
 
-    def extractOneWayConnections(self, connections):
-        """ Extracts one way connections from list of connections.
+    # def extractOneWayConnections(self, connections):
+    #     """ Extracts one way connections from list of connections.
 
-        :connections: list of connections
-        :returns: list of indexes of one way connections in connection list
+    #     :connections: list of connections
+    #     :returns: list of indexes of one way connections in connection list
 
-        """
-        oneDirectionConnection = []
-        for c in connections:
-            c_return = Connections(src_iata=c.dst_iata, dst_iata=c.src_iata)
-            if not c or not c_return in oneDirectionConnection:
-                oneDirectionConnection.append(c)
+    #     """
+    #     oneDirectionConnection = []
+    #     for c in connections:
+    #         c_return = Connections(src_iata=c.dst_iata, dst_iata=c.src_iata)
+    #         if not c or not c_return in oneDirectionConnection:
+    #             oneDirectionConnection.append(c)
 
-        return oneDirectionConnectiony
+    #     return oneDirectionConnectiony
 
     def __getTimeTable(self, date, connection):
         """ Gets monthly time table for connections and date
@@ -262,22 +233,6 @@ class WizzairPlugin(object):
 
         timeTableJSON = self._dlMgr.getTimeTable(details)
         return self.parser.extractJSONTimeTable(timeTableJSON)
-
-
-    def __addFlightDetails(self, flight, connection_ID):
-        """TODO: Docstring for __addFlightDetails.
-
-        :flight: TODO
-        :returns: TODO
-
-        """
-        if len(flight['Flights']) == 0:
-            flightObj = self.__convertToFlightDetailsObject(flight, connection_ID)
-            self.db.addFlightDetails(flightObj)
-        else:
-            pass
-            # Search for updated prices for flights from-to
-            # self.__addFlightDetails(flight
 
     def __convertToFlightDetailsObject(self, flight, connection_ID):
         """TODO: Docstring for __convertToFlightDetailsObject.
@@ -302,7 +257,6 @@ class WizzairPlugin(object):
                                   isMacStation = tools.str2Boolean(flight['Flights'][0]['IsMACStation']),
                                   isAirportChanged = tools.str2Boolean(flight['Flights'][0]['IsAirportChange'])
                                   )
-
         return flightObj
 
     def asyncReceiver(self):
@@ -310,19 +264,12 @@ class WizzairPlugin(object):
         while True:
             flightDetailsJSON = self.return_q.get()
             list = self.parser.extractJSONFlightDetails(flightDetailsJSON)
-            for item in list:
-                item.id_connections = [x for x in self.connections if x==item][0].id
-                lm.debug(item)
-                self.db.addFlightDetails(item)
+            self.handleFlightDetails(list)
             self.return_q.task_done()
 
-    def __fetchFlightDetails(self, flight):
 
-        """TODO: Docstring for downloadData.
-        :returns: TODO
+    def handleFlightDetails(self, flightDetalsList):
+        for item in  flightDetalsList:
+            item.id_connections = [x for x in self.connections if x==item][0].id
+            self.db.addFlightDetails(item)
 
-        """
-        return self._dlMgr.searchFlightDetails(flight)
-        # for connection in self.db.queryConnections():
-        #     print(connection.id);
-            # print("{0} 1}".format(src, dst))
