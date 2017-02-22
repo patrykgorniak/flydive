@@ -36,14 +36,16 @@ class Airport(Base):
     name = Column(String(100), nullable=False)
     latitude =  Column(String(50))
     longitude = Column(String(50))
-    country = Column(String(150))
+    country_name = Column(String(150))
+    country_code = Column(String(150))
     
     def __str__(self):
-        return "Airport: IATA: {0}, name: {1}, latitude: {2}, longitute: {3}, country: {4}".format(self.iata,
-                                                                                                   self.name,
-                                                                                                   self.latitude,
-                                                                                                   self.longitude,
-                                                                                                   self.country)
+        return "Airport: IATA: {0}, name: {1}, latitude: {2}, longitute: {3}, country: {4} country code: {}".format(self.iata,
+                                                                                                               self.name,
+                                                                                                               self.latitude,
+                                                                                                               self.longitude,
+                                                                                                               self.country_name,
+                                                                                                               self.coutry_code)
 
 class Connections(Base, Helper):
     __tablename__ = 'connections'

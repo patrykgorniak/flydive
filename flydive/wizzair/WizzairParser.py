@@ -89,8 +89,8 @@ class WizzairParser(object):
                 airport = Airport(iata=row['IATA'],
                                   name=row['ShortName'],
                                   latitude=row['Latitude'],
-                                  longitude=row['Longitude'],
-                                  country='N/A')
+                                  longitude=row['Longitude']
+                                  )
                 airportList.append(airport)
 
         return airportList
