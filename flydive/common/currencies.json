@@ -234,9 +234,6 @@
       },
       { "CountryName" : "CHILE",
         "CurrencyCode" : "CLF",
-        "CurrencyName" : { "#text" : "Unidad de Fomento",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "990"
       },
       { "CountryName" : "CHINA",
@@ -778,9 +775,6 @@
       },
       { "CountryName" : "MEXICO",
         "CurrencyCode" : "MXV",
-        "CurrencyName" : { "#text" : "Mexican Unidad de Inversion (UDI)",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "979"
       },
       { "CountryName" : "MICRONESIA (FEDERATED STATES OF)",
@@ -1156,16 +1150,10 @@
       },
       { "CountryName" : "SWITZERLAND",
         "CurrencyCode" : "CHE",
-        "CurrencyName" : { "#text" : "WIR Euro",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "947"
       },
       { "CountryName" : "SWITZERLAND",
         "CurrencyCode" : "CHW",
-        "CurrencyName" : { "#text" : "WIR Franc",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "948"
       },
       { "CountryName" : "SYRIAN ARAB REPUBLIC",
@@ -1275,9 +1263,6 @@
       },
       { "CountryName" : "UNITED STATES OF AMERICA (THE)",
         "CurrencyCode" : "USN",
-        "CurrencyName" : { "#text" : "US Dollar (Next day)",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "997"
       },
       { "CountryName" : "URUGUAY",
@@ -1287,9 +1272,6 @@
       },
       { "CountryName" : "URUGUAY",
         "CurrencyCode" : "UYI",
-        "CurrencyName" : { "#text" : "Uruguay Peso en Unidades Indexadas (URUIURUI)",
-            "-IsFund" : "true"
-          },
         "CurrencyNumber" : "940"
       },
       { "CountryName" : "UZBEKISTAN",
