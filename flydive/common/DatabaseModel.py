@@ -38,20 +38,24 @@ class Airport(Base):
     longitude = Column(String(50))
     country_name = Column(String(150))
     country_code = Column(String(150))
+    currency_code = Column(String(150))
+    currency_name = Column(String(150))
+    currency_number = Column(String(150))
     
     def __str__(self):
-        return "Airport: IATA: {0}, name: {1}, latitude: {2}, longitute: {3}, country: {4} country code: {}".format(self.iata,
-                                                                                                               self.name,
-                                                                                                               self.latitude,
-                                                                                                               self.longitude,
-                                                                                                               self.country_name,
-                                                                                                               self.coutry_code)
+        return "Airport: IATA: {0}, name: {1}, latitude: {2}, longitute: {3}, country: {4} country code: {} currency code: {}".format(self.iata,
+                                                                                                                                       self.name,
+                                                                                                                                       self.latitude,
+                                                                                                                                       self.longitude,
+                                                                                                                                       self.country_name,
+                                                                                                                                       self.coutry_code,
+                                                                                                                                       self.currency_code)
 
 class Connections(Base, Helper):
     __tablename__ = 'connections'
 
     id = Column(Integer, primary_key=True)
-    src_iata = Column(String(10), nullable=False)
+    src_iata = Column(String(10), ForeignKey('airport.iata'), nullable=False)
     dst_iata = Column(String(10), nullable=False)
     carrierCode = Column(String(10),ForeignKey('airline.carrierCode'))
     updated = Column(DateTime, nullable=False, default = func.now())

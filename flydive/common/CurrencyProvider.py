@@ -1,4 +1,5 @@
 import json
+import os
 
 currencyProvider = None
 
@@ -22,13 +23,15 @@ class Currency():
 
 class CurrencyProvider:
     def __init__(self):
-        self.file_data = open("currencies.json",'r').read()
+        self.dir = os.path.dirname(__file__)
+        self.file_data = open(os.path.join(self.dir, "currencies.json") ,'r').read()
         self.currency_db = json.loads(self.file_data)
 
     def getCurrency(self, countryName = None):
         for item in self.currency_db['Currencies']:
             if str(item['CountryName']).find(countryName.upper()) != -1:
                 return Currency(item['CurrencyCode'], item['CurrencyName'], item['CurrencyNumber'])
+        return Currency("N/A","N/A","N/A")
 
 
 if __name__ == "__main__":

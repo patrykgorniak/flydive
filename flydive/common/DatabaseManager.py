@@ -89,6 +89,17 @@ class DatabaseManager(object):
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 
+    def getOrderedConnections(self, order = []):
+        session = self.Session()
+        connectionList = session.query(Connections).join(Airport).\
+                filter(Airport.currency_code=='PLN').all()
+        connectionList.extend(session.query(Connections).join(Airport).\
+                filter(Airport.currency_code=='EUR').all())
+        connectionList.extend(session.query(Connections).join(Airport).\
+                filter(Airport.currency_code!='PLN', Airport.currency_code!='EUR').all())
+
+        return connectionList
+
     def addFlightDetails(self, flightDetails):
         """TODO: Docstring for addFlightDetails.
 
@@ -146,6 +157,22 @@ class DatabaseManager(object):
         session.commit()
         return data
 
+    def exists(self, entry):
+        filter_by = {}
+        if isinstance(entry, Airline):
+            filter_by = { 'carrierCode': entry.carrierCode }
+        elif isinstance(entry, Airport):
+            filter_by = { 'iata': entry.iata }
+        elif isinstance(entry, Connections):
+            filter_by = { 'src_iata': entry.src_iata, 'dst_iata': entry.dst_iata }
+        else:
+            raise TypeError('error')
+
+        if not self.__exists(entry, filter_by):
+            return False
+        else:
+            return True
+
     def __exists(self, entry, filtered_by):
         """TODO: Docstring for function.
 
@@ -159,10 +186,8 @@ class DatabaseManager(object):
 
 def main():
     dbMgr = DatabaseManager('flydive', 'sqlite')
-    dbMgr.addAirline(Airline(carrierCode='W6', airlineName='wizzair'))
-    dbMgr.addAirline(Airline(carrierCode='W6', airlineName='wizzair'))
-    dbMgr.addAirline(Airline(carrierCode='W6', airlineName='wizzair'))
-    dbMgr.addAirline(Airline(carrierCode='W6', airlineName='wizzair'))
+    for i in getOrderedConnections():
+        print(i)
 
 if __name__ == "__main__":
     main()

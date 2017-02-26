@@ -25,17 +25,18 @@ class WizzairPlugin(object):
         self._dlMgr = WizzairDl()
         self.parser = WizzairParser()
         self.geo_name = GeoNameProvider()
+
         self.cfg = CfgMgr().getConfig()
         self.db = DatabaseManager(self.cfg['DATABASE']['name'], self.cfg['DATABASE']['type'])
         self.month_delta =int(self.cfg['FLIGHTS']['month_delta'])
         self.currentDate = datetime.datetime.now()
         self.session = SessionManager(self.airline_name)
-        self.asyncMode = True
         self.flight_detail_bypass = str(self.cfg['DEBUGGING']['flight_detail_bypass'])=='on'
+        self.asyncMode = True
 
         if self._asyncDlMgr is not None:
-            receiver = threading.Thread(target=self.asyncReceiver, daemon=True)
-            receiver.start()
+            self.receiver = threading.Thread(target=self.asyncReceiver)
+            self.receiver.start()
 
         self.__initAirline()
 
@@ -63,9 +64,13 @@ class WizzairPlugin(object):
             # self.session.close()
         else:
             self.log("Get connection from DB.")
-            self.connections.extend(self.db.getConnections())
-            # con = Connections(src_iata='LTN', dst_iata='WAW')
-            # connections.extend(self.db.getConnections(con))
+            # self.connections.extend(self.db.getConnections())
+            self.connections.extend(self.db.getOrderedConnections())
+            # sorted(self.connections, key = lambda con: (con))
+            # con = Connections(src_iata='WAW', dst_iata='LIS')
+            # self.connections.extend(self.db.getConnections(con))
+            # con = Connections(src_iata='LIS', dst_iata='WAW')
+            # self.connections.extend(self.db.getConnections(con))
 
         oneWayIdxList = self.getOneWayConnectionIndexList(self.connections);
         self.log("Dupplicates: {}".format([item for item, count in collections.Counter(oneWayIdxList).items() if count>1]))
@@ -90,6 +95,8 @@ class WizzairPlugin(object):
                 if(len(connectionsLeftList)):
                     self.session.save(connectionsLeftList)
                 raise
+
+        self.receiver.join();
 
     def __asyncGetFlightDetails(self, flight):
         flightDetailsJSON = self._dlMgr.getFlightDetails(flight)
@@ -153,17 +160,11 @@ class WizzairPlugin(object):
         self.db.addAirline(airline)
 
     def __unpackAndAddToDb(self, connection, filter_by = {}):
-        """TODO: Docstring for __extractConnection.
 
-        :connection: TODO
-        :returns: TODO
-
-        """
         connectionList = self.parser.extractJSONConnectionToList(connection)
 
         for c in connectionList:
             c.id = self.db.addConnection(c)
-            #TODO: Added connections to DB, filter OneDirectionConnection
 
     def __fetchAndAddAirports(self):
         """
@@ -171,10 +172,9 @@ class WizzairPlugin(object):
         self.log("Fetching and adding airports");
         airports = self.parser.extractJSONAirportsToList(self._dlMgr.getAirports())
         for airport in airports:
-            geo_data = self.geo_name.getGeoName({"lat":airport.latitude, "long":airport.longitude, "name": airport.name })
-            airport.country_name = geo_data['countryName']
-            airport.country_code = geo_data['countryCode']
-            self.db.addAirport(airport)
+            if not self.db.exists(airport):
+                airport = self.geo_name.getGeoData(airport)
+                self.db.addAirport(airport)
 
     def getOneWayConnectionIndexList(self, connectionList):
         """ Extracts one way connections from list of connections.
@@ -248,9 +248,15 @@ class WizzairPlugin(object):
             self.handleFlightDetails(list)
             self.return_q.task_done()
 
+            if self.return_q.empty():
+                sleep(15)
+            if self.return_q.empty():
+                return None
+
 
     def handleFlightDetails(self, flightDetalsList):
-        for item in  flightDetalsList:
+        for item in flightDetalsList:
+            # self.log(item)
             item.id_connections = [x for x in self.connections if x==item][0].id
             self.db.addFlightDetails(item)
 

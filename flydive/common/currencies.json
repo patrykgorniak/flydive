@@ -318,7 +318,12 @@
         "CurrencyName" : "Euro",
         "CurrencyNumber" : "978"
       },
-      { "CountryName" : "CZECH REPUBLIC (THE)",
+      { "CountryName" : "KOSOVO",
+        "CurrencyCode" : "EUR",
+        "CurrencyName" : "Euro",
+        "CurrencyNumber" : "978"
+      },
+      { "CountryName" : "CZECHIA",
         "CurrencyCode" : "CZK",
         "CurrencyName" : "Czech Koruna",
         "CurrencyNumber" : "203"
