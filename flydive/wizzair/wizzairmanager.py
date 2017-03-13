@@ -14,6 +14,7 @@ import datetime
 from time import sleep
 import locale
 import queue
+import json
 import threading
 
 class WizzairPlugin(object):
@@ -25,45 +26,47 @@ class WizzairPlugin(object):
         self._dlMgr = WizzairDl()
         self.parser = WizzairParser()
         self.geo_name = GeoNameProvider()
-
         self.cfg = CfgMgr().getConfig()
+        
+        # READ CONFIG DATA
         self.db = DatabaseManager(self.cfg['DATABASE']['name'], self.cfg['DATABASE']['type'])
-        self.month_delta =int(self.cfg['FLIGHTS']['month_delta'])
+        self.month_delta =int(self.cfg['FLIGHT_SEARCH']['month_delta'])
+        self.flight_detail_bypass = str(self.cfg['DEBUGGING']['flight_detail_bypass'])=='on'
+        self.dumpConnections = str(self.cfg['DEBUGGING']['dump_connections_to_graph'])=='on'
+        self.asyncMode = str(self.cfg['DOWNLOAD_MANAGER']['async_mode'])=='on'
+        self.dump_restore_session = str(self.cfg['GENERAL']['dump_restore_session'])=='on'
+        self.departure_cities = json.loads(self.cfg['FLIGHT_SEARCH']['departure_cities'])
+
         self.currentDate = datetime.datetime.now()
         self.session = SessionManager(self.airline_name)
-        self.flight_detail_bypass = str(self.cfg['DEBUGGING']['flight_detail_bypass'])=='on'
-        self.asyncMode = True
 
-        if self._asyncDlMgr is not None:
+        if not self.flight_detail_bypass and self.asyncMode and self._asyncDlMgr is not None:
             self.receiver = threading.Thread(target=self.asyncReceiver)
             self.receiver.start()
-
-        self.__initAirline()
 
     def log(self, message):
         lm.debug("WizzairPlugin: {0}".format(message))
 
-
     def run(self):
+        self.__initAirline()
         self.connections = []
         self.proceedList = []
         # date_from = datetime.datetime(2016,12,10) # this is only for test
         delay_data = datetime.timedelta(days=7)
         date_from = self.currentDate + delay_data;
         date_to = date_from + monthdelta(self.month_delta)
-        self.log("Flights from: {} to {}".format(date_from, date_to))
+        self.log("Flights update between: {} - {}".format(date_from, date_to))
 
-        self.log("Fetch and add airports")
         self.__fetchAndAddAirports()
-        self.log("Fetch and add connections")
         self.__fetchAndAddConnections()
 
-        if self.session.isSaved():
-            self.log("Restore session.")
+        if(self.dumpConnections):
+            tools.dumpConnectionsToGraph(self._dlMgr.getConnections())
+
+        if self.dump_restore_session and self.session.isSaved():
             self.connections.extend(self.session.restoreSession())
-            # self.session.close()
+            self.session.close()
         else:
-            self.log("Get connection from DB.")
             # self.connections.extend(self.db.getConnections())
             self.connections.extend(self.db.getOrderedConnections())
             # sorted(self.connections, key = lambda con: (con))
@@ -74,29 +77,30 @@ class WizzairPlugin(object):
 
         oneWayIdxList = self.getOneWayConnectionIndexList(self.connections);
         self.log("Dupplicates: {}".format([item for item, count in collections.Counter(oneWayIdxList).items() if count>1]))
-        for i in self.connections:
-            self.log(i)
+        # for i in self.connections:
+        #     self.log(i)
+        # self.log("Oneway connection IDXs:\n{}".format(oneWayIdxList))
 
-        self.log("Oneway connection IDXs:\n{}".format(oneWayIdxList))
-
-        self.log("OneWayIdxList: {} \nConnections: {}".format(len(oneWayIdxList),len(self.connections)))
+        # self.log("OneWayIdxList: {} \nConnections: {}".format(len(oneWayIdxList),len(self.connections)))
         assert (len(oneWayIdxList)*2) == len(self.connections)
 
         if not self.flight_detail_bypass:
             try:
                 self.getFlightDetails(date_from, date_to, oneWayIdxList)
-                self.log("Total time: {}".format(self.currentDate - datetime.datetime.now()))
             except:
-                lm.debug("Session dumped!")
-                connectionsLeftList = []
-                if len(self.proceedList) % 2 != 0:
-                    self.proceedList.pop()
-                connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
-                if(len(connectionsLeftList)):
-                    self.session.save(connectionsLeftList)
-                raise
+                if self.dump_restore_session:
+                    lm.debug("Session dumped!")
+                    connectionsLeftList = []
+                    if len(self.proceedList) % 2 != 0:
+                        self.proceedList.pop()
+                    connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
+                    if(len(connectionsLeftList)):
+                        self.session.save(connectionsLeftList)
+                    raise
 
-        self.receiver.join();
+        if not self.flight_detail_bypass and self.asyncMode:
+            self.receiver.join()
+        self.log("Total time: {}".format(datetime.datetime.now() - self.currentDate))
 
     def __asyncGetFlightDetails(self, flight):
         flightDetailsJSON = self._dlMgr.getFlightDetails(flight)
@@ -122,7 +126,7 @@ class WizzairPlugin(object):
         :returns: TODO
 
         """
-        self.log("Fetching and adding connections");
+        self.log("Fetch and add connections")
         # testFilter = self.__generateConnections()
 
         for connectionsFromAirport in self._dlMgr.getConnections():
@@ -151,10 +155,6 @@ class WizzairPlugin(object):
         return con
 
     def __initAirline(self):
-        """TODO: Docstring for __addAirline.
-        :returns: TODO
-
-        """
         self.log("Add airline {0}".format(self.carrierCode))
         airline = Airline(carrierCode=self.carrierCode, airlineName=self.airline_name)
         self.db.addAirline(airline)
@@ -169,7 +169,7 @@ class WizzairPlugin(object):
     def __fetchAndAddAirports(self):
         """
         """
-        self.log("Fetching and adding airports");
+        self.log("Fetch and add airports")
         airports = self.parser.extractJSONAirportsToList(self._dlMgr.getAirports())
         for airport in airports:
             if not self.db.exists(airport):
@@ -256,8 +256,8 @@ class WizzairPlugin(object):
 
     def handleFlightDetails(self, flightDetalsList):
         for item in flightDetalsList:
-            # self.log(item)
-            item.id_connections = [x for x in self.connections if x==item][0].id
+            # self.log(item) 
+            item.id_connections = [x for x in self.connections if x==item][0].id  #TODO: should be changed, maybe to HASH MAP
             self.db.addFlightDetails(item)
 
     def getFlightDetails(self, date_from, date_to, oneWayIdxList):

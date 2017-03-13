@@ -2,6 +2,7 @@ import os
 import sys
 import json
 from common.DatabaseModel import Connections
+from common import LogManager as lm
 from datetime import datetime
 
 class SessionEncoder(json.JSONEncoder):
@@ -38,6 +39,9 @@ class SessionManager(object):
         self.restore = False
 
         self.__open()
+
+    def log(self, message):
+        lm.debug("SessionManager: {0}".format(message))
 
     def __open(self):
         """TODO: Docstring for open.
@@ -84,6 +88,7 @@ class SessionManager(object):
        :returns: TODO
 
        """
+       self.log("Restore session.")
        restoredSession = []
        restoredSession.extend(self.__load())
        return restoredSession

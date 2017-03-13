@@ -111,13 +111,26 @@ class DatabaseManager(object):
             raise TypeError('fightDetails is not object of FlightDetails.')
 
         self.log("Adding flight: " + str(flightDetails))
-        if not self.__exists(flightDetails, {'id_connections' : flightDetails.id_connections,
+        dbFlightDetails = self.__exists(flightDetails, {'id_connections' : flightDetails.id_connections,
                                              'flightNumber': flightDetails.flightNumber,
                                              'inDC': flightDetails.inDC,
-                                             'departure_DateTime': flightDetails.departure_DateTime}):
+                                             'departure_DateTime': flightDetails.departure_DateTime})
+        if not dbFlightDetails:
             self.__addAndCommit(flightDetails)
         else:
-            self.log("Object exists in DB")
+            self.updateFlightDetails(dbFlightDetails, flightDetails)
+            # self.log("Object exists in DB -> UPDATED!")
+
+
+    def updateFlightDetails(self,flightDetailsOld , flightDetailsNew):
+        if not isinstance(flightDetailsNew, FlightDetails):
+            raise TypeError('fightDetails is not object of FlightDetails.')
+        
+        flightDetailsOld.arrival_DateTime = flightDetailsNew.arrival_DateTime
+        flightDetailsOld.price = flightDetailsNew.price
+        flightDetailsOld.availableCount = flightDetailsNew.availableCount
+        session = self.Session()
+        session.commit()
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.
