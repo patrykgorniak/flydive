@@ -10,6 +10,7 @@ from common import LogManager as lm
 from common import tools
 from monthdelta import monthdelta
 from common.SessionManager import SessionManager
+from common.AlgorithmsSupport import BFS
 import datetime
 from time import sleep
 import locale
@@ -36,6 +37,9 @@ class WizzairPlugin(object):
         self.asyncMode = str(self.cfg['DOWNLOAD_MANAGER']['async_mode'])=='on'
         self.dump_restore_session = str(self.cfg['GENERAL']['dump_restore_session'])=='on'
         self.departure_cities = json.loads(self.cfg['FLIGHT_SEARCH']['departure_cities'])
+        self.arrival_cities = json.loads(self.cfg['FLIGHT_SEARCH']['arrival_cities'])
+        self.search_depth = int(self.cfg['FLIGHT_SEARCH']['search_depth'])
+        self.excluded_cities = json.loads(self.cfg['FLIGHT_SEARCH']['excluded_cities'])
 
         self.currentDate = datetime.datetime.now()
         self.session = SessionManager(self.airline_name)
@@ -51,6 +55,7 @@ class WizzairPlugin(object):
         self.__initAirline()
         self.connections = []
         self.proceedList = []
+        paths = []
         # date_from = datetime.datetime(2016,12,10) # this is only for test
         delay_data = datetime.timedelta(days=7)
         date_from = self.currentDate + delay_data;
@@ -59,9 +64,16 @@ class WizzairPlugin(object):
 
         self.__fetchAndAddAirports()
         self.__fetchAndAddConnections()
+        graph = tools.dumpConnectionsToGraph(self._dlMgr.getConnections(), self.excluded_cities)
 
-        if(self.dumpConnections):
-            tools.dumpConnectionsToGraph(self._dlMgr.getConnections())
+        for src_iata in self.departure_cities:
+            for dst_iata in self.arrival_cities:
+                paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
+
+        file = open("paths.txt", "w")
+        for path in paths:
+            file.write("{}\n".format(path))
+        file.close()
 
         if self.dump_restore_session and self.session.isSaved():
             self.connections.extend(self.session.restoreSession())
@@ -127,10 +139,13 @@ class WizzairPlugin(object):
 
         """
         self.log("Fetch and add connections")
+        addedToDb = False
         # testFilter = self.__generateConnections()
 
         for connectionsFromAirport in self._dlMgr.getConnections():
-            self.__unpackAndAddToDb(connectionsFromAirport)
+            if self.__unpackAndAddToDb(connectionsFromAirport):
+                addedToDb = True
+        return addedToDb
 
     def __getTestConnections(self):
         """TODO: Docstring for __getTestConnections.
@@ -161,10 +176,13 @@ class WizzairPlugin(object):
 
     def __unpackAndAddToDb(self, connection, filter_by = {}):
 
+        addedToDb = False
         connectionList = self.parser.extractJSONConnectionToList(connection)
 
         for c in connectionList:
-            c.id = self.db.addConnection(c)
+            if self.db.addConnection(c):
+                addedToDb = True
+        return addedToDb
 
     def __fetchAndAddAirports(self):
         """

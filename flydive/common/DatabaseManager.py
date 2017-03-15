@@ -59,10 +59,10 @@ class DatabaseManager(object):
 
         if not inDb:
             self.log("Add connection from {0} to {1}".format(connection.src_iata, connection.dst_iata))
-            return self.__addAndCommit(connection).id
+            return True
         else:
             self.log("Connection from {0} to {1} exists in DB".format(connection.src_iata, connection.dst_iata))
-            return inDb.id
+            return False
 
     def queryConnections(self, filter_by = {}):
         """Query connections by given filter
