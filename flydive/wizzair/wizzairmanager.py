@@ -11,6 +11,7 @@ from common import tools
 from monthdelta import monthdelta
 from common.SessionManager import SessionManager
 from common.AlgorithmsSupport import BFS
+from common.FLPlugin import FLPlugin
 import datetime
 from time import sleep
 import locale
@@ -18,8 +19,9 @@ import queue
 import json
 import threading
 
-class WizzairPlugin(object):
+class WizzairPlugin(FLPlugin):
     def __init__(self, asyncDlMgr = None):
+        FLPlugin.__init__(self)
         self.carrierCode = WizzData.carrierCode
         self.airline_name = WizzData.airline_name
         self.return_q = queue.Queue()
@@ -28,12 +30,11 @@ class WizzairPlugin(object):
         self.parser = WizzairParser()
         self.geo_name = GeoNameProvider()
         self.cfg = CfgMgr().getConfig()
-        
+
         # READ CONFIG DATA
         self.db = DatabaseManager(self.cfg['DATABASE']['name'], self.cfg['DATABASE']['type'])
         self.month_delta =int(self.cfg['FLIGHT_SEARCH']['month_delta'])
         self.flight_detail_bypass = str(self.cfg['DEBUGGING']['flight_detail_bypass'])=='on'
-        self.dumpConnections = str(self.cfg['DEBUGGING']['dump_connections_to_graph'])=='on'
         self.asyncMode = str(self.cfg['DOWNLOAD_MANAGER']['async_mode'])=='on'
         self.dump_restore_session = str(self.cfg['GENERAL']['dump_restore_session'])=='on'
         self.departure_cities = json.loads(self.cfg['FLIGHT_SEARCH']['departure_cities'])
@@ -70,25 +71,22 @@ class WizzairPlugin(object):
             for dst_iata in self.arrival_cities:
                 paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
 
-        file = open("paths.txt", "w")
-        for path in paths:
-            file.write("{}\n".format(path))
-        file.close()
+        connectionQueryList = self.prepareConnectionsQuery(paths)
+        self.connections.extend(self.db.getConnectionList(connectionQueryList))
+
+        # file = open("paths.txt", "w")
+        # for path in paths:
+        #     file.write("{}\n".format(path))
+        # file.close()
 
         if self.dump_restore_session and self.session.isSaved():
             self.connections.extend(self.session.restoreSession())
             self.session.close()
-        else:
-            # self.connections.extend(self.db.getConnections())
-            self.connections.extend(self.db.getOrderedConnections())
-            # sorted(self.connections, key = lambda con: (con))
-            # con = Connections(src_iata='WAW', dst_iata='LIS')
-            # self.connections.extend(self.db.getConnections(con))
-            # con = Connections(src_iata='LIS', dst_iata='WAW')
-            # self.connections.extend(self.db.getConnections(con))
+        # else:
+        #     self.connections.extend(self.db.getOrderedConnections())
 
         oneWayIdxList = self.getOneWayConnectionIndexList(self.connections);
-        self.log("Dupplicates: {}".format([item for item, count in collections.Counter(oneWayIdxList).items() if count>1]))
+        # self.log("Dupplicates: {}".format([item for item, count in collections.Counter(oneWayIdxList).items() if count>1]))
         # for i in self.connections:
         #     self.log(i)
         # self.log("Oneway connection IDXs:\n{}".format(oneWayIdxList))
@@ -113,6 +111,14 @@ class WizzairPlugin(object):
         if not self.flight_detail_bypass and self.asyncMode:
             self.receiver.join()
         self.log("Total time: {}".format(datetime.datetime.now() - self.currentDate))
+
+    def prepareConnectionsQuery(self, paths):
+        queryList = []
+        for path in paths:
+            for i in range(len(path) - 1):
+                queryList.append(Connections(src_iata=path[i], dst_iata=path[i+1], carrierCode = self.carrierCode))
+                queryList.append(Connections(src_iata=path[i+1], dst_iata=path[i], carrierCode = self.carrierCode))
+        return queryList
 
     def __asyncGetFlightDetails(self, flight):
         flightDetailsJSON = self._dlMgr.getFlightDetails(flight)
@@ -274,15 +280,20 @@ class WizzairPlugin(object):
 
     def handleFlightDetails(self, flightDetalsList):
         for item in flightDetalsList:
-            # self.log(item) 
-            item.id_connections = [x for x in self.connections if x==item][0].id  #TODO: should be changed, maybe to HASH MAP
+            # self.log(item)
+            connection = [x for x in self.connections if x==item][0]  #TODO: should be changed, maybe to HASH MAP
+            item.id_connections = connection.id
             self.db.addFlightDetails(item)
+
+        connection.updated =  datetime.datetime.now().date()
+        self.db.updateConnection(connection)
+
 
     def getFlightDetails(self, date_from, date_to, oneWayIdxList):
         for i, idx in enumerate(oneWayIdxList):
             for delta in range(self.month_delta):
                 time = date_from + monthdelta(delta)
-                
+
                 timeTableList = self.__getTimeTable(time, self.connections[idx]) #get timetable for given year-month
                 for flight in timeTableList:
                     if flight.date > date_from and flight.date <= date_to: #datetime.datetime(2017,2,18):

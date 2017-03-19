@@ -23,6 +23,7 @@ class DatabaseManager(object):
                                     poolclass=StaticPool)
                                     #echo=args.verbose_sql, poolclass=SingletonThreadPool)
         self.Session = sessionmaker(bind=self.engine)
+        self.session = self.Session()
 
         if not database_exists(self.database_uri):
             self.__createDatabaseModel()
@@ -59,10 +60,18 @@ class DatabaseManager(object):
 
         if not inDb:
             self.log("Add connection from {0} to {1}".format(connection.src_iata, connection.dst_iata))
+            self.__addAndCommit(connection)
             return True
         else:
             self.log("Connection from {0} to {1} exists in DB".format(connection.src_iata, connection.dst_iata))
             return False
+
+    def updateConnection(self, connection):
+        inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata })
+        if inDb:
+            inDb.updated = connection.updated #DateTime.date()
+            self.session.commit()
+
 
     def queryConnections(self, filter_by = {}):
         """Query connections by given filter
@@ -71,10 +80,18 @@ class DatabaseManager(object):
         :returns: connection list
         """
 
-        session = self.Session()
-        connectionsList = session.query(Connections).filter_by(**filter_by)
+        # session = self.Session()
+        connectionsList = self.session.query(Connections).filter_by(**filter_by)
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
+
+    def getConnectionList(self, connectionQueryList = []):
+        connectionList = []
+        for connection in connectionQueryList:
+            assert(isinstance(connection, Connections), "{} is not type of Connections".format(type(connection)))
+            connectionList.extend(self.getConnections(connection))
+
+        return connectionList
 
     def getConnections(self, connection = Connections()):
         """ Query connections
@@ -84,18 +101,18 @@ class DatabaseManager(object):
 
         """
 
-        session = self.Session()
-        connectionsList = session.query(Connections).filter_by(**(connection.to_dict()))
+        # session = self.Session()
+        connectionsList = self.session.query(Connections).filter_by(**(connection.to_dict()))
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 
     def getOrderedConnections(self, order = []):
-        session = self.Session()
-        connectionList = session.query(Connections).join(Airport).\
+        # session = self.Session()
+        connectionList = self.session.query(Connections).join(Airport).\
                 filter(Airport.currency_code=='PLN').all()
-        connectionList.extend(session.query(Connections).join(Airport).\
+        connectionList.extend(self.session.query(Connections).join(Airport).\
                 filter(Airport.currency_code=='EUR').all())
-        connectionList.extend(session.query(Connections).join(Airport).\
+        connectionList.extend(self.session.query(Connections).join(Airport).\
                 filter(Airport.currency_code!='PLN', Airport.currency_code!='EUR').all())
 
         return connectionList
@@ -122,15 +139,15 @@ class DatabaseManager(object):
             # self.log("Object exists in DB -> UPDATED!")
 
 
-    def updateFlightDetails(self,flightDetailsOld , flightDetailsNew):
+    def updateFlightDetails(self, flightDetailsOld, flightDetailsNew):
         if not isinstance(flightDetailsNew, FlightDetails):
             raise TypeError('fightDetails is not object of FlightDetails.')
         
         flightDetailsOld.arrival_DateTime = flightDetailsNew.arrival_DateTime
         flightDetailsOld.price = flightDetailsNew.price
         flightDetailsOld.availableCount = flightDetailsNew.availableCount
-        session = self.Session()
-        session.commit()
+        # session = self.Session()
+        self.session.commit()
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.
@@ -165,9 +182,9 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
-        session = self.Session()
-        session.add(data)
-        session.commit()
+        # session = self.Session()
+        self.session.add(data)
+        self.session.commit()
         return data
 
     def exists(self, entry):
@@ -193,8 +210,8 @@ class DatabaseManager(object):
         :returns: TODO
 
         """
-        session = self.Session()
-        data = session.query(type(entry)).filter_by(**filtered_by).first()
+        # session = self.Session()
+        data = self.session.query(type(entry)).filter_by(**filtered_by).first()
         return data
 
 def main():

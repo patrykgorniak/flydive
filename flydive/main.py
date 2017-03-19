@@ -6,7 +6,7 @@ from common import HttpManager
 from common.tools import printJSON
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as LogMgr
-from common import DownloadManager
+from FLPluginManager import FLPluginManager
 
 
 def setupLogger(cfg):
@@ -15,9 +15,11 @@ def setupLogger(cfg):
 def main():
     cfg = CfgMgr().getConfig()
     setupLogger(cfg['LOGGER'])
-    asyncDlMgr =  DownloadManager.AsyncDownloadManager()
-    wiz = WizzairPlugin(asyncDlMgr)
-    wiz.run()
+
+    flydive = FLPluginManager()
+    flydive.registerPlugin(WizzairPlugin)
+
+    flydive.start()
 
 if __name__ == "__main__":
     main()
