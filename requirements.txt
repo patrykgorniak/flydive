@@ -1,2 +1,7 @@
+MonthDelta==0.9.1
+pkg-resources==0.0.0
+pycountry==17.1.8
 requests==2.10.0
+six==1.10.0
 SQLAlchemy==1.0.14
+SQLAlchemy-Utils==0.32.9
