@@ -4,4 +4,4 @@ class FLPlugin():
         pass
 
     def run(self):
-        assert(false, "Base class: not implemented.")
+        assert False, "Base class: not implemented."
