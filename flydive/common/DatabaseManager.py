@@ -7,26 +7,56 @@ from common import LogManager as lm
 
 class DatabaseManager(object):
 
-    def __init__(self, database_name, database_type):
-        """TODO: Docstring for __init__.
+    def __init__(self, db_name="", db_type="", db_server="", db_pass="", db_user="" ):
+        self.check_config(db_type, db_server, db_pass, db_user, db_name)
+        self.database_name = db_name
+        self.database_type = db_type
 
-        :database_name: TODO
-        :database_type: TODO
-        :returns: TODO
+        if self.database_type=="sqlite":
+            self.database_uri = self.database_type + ':///' + self.database_name + '.' + self.database_type
+            self.engine = create_engine(self.database_uri,
+                                        connect_args={'check_same_thread':False},
+                                        poolclass=StaticPool)
+        elif self.database_type=="mysql":
+            self.database_uri = \
+            "mysql+pymysql://{}:{}@{}/{}".format(db_user, db_pass, db_server, db_name)
+            self.engine = create_engine("{}?charset=utf8".format(self.database_uri),
+                                        poolclass=StaticPool,
+                                        encoding='utf-8')
+        else:
+            assert(false, "Not supported DB.")
 
-        """
-        self.database_name = database_name
-        self.database_type = database_type
-        self.database_uri = self.database_type + ':///' + self.database_name + '.' + self.database_type
-        self.engine = create_engine(self.database_uri, 
-                                    connect_args={'check_same_thread':False},
-                                    poolclass=StaticPool)
+        self.engine = create_engine("{}?charset=utf8".format(self.database_uri),
+                                    # connect_args={'check_same_thread':False},
+                                    poolclass=StaticPool,
+                                    encoding='utf-8')
                                     #echo=args.verbose_sql, poolclass=SingletonThreadPool)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
         if not database_exists(self.database_uri):
             self.__createDatabaseModel()
+
+    def check_config(self, db_type, db_server, db_pass, db_user, db_name):
+        """TODO: Docstring for check_config.
+        :db_type: TODO
+        :db_server: TODO
+        :db_pass: TODO
+        :db_user: TODO
+        :db_name: TODO
+        :returns: TODO
+
+        """
+        if db_type=="mysql":
+            assert(db_name!="", "Wrong name of DB")
+            assert(db_server!="", "Wrong server of DB")
+            assert(db_pass!="", "Wrong pass of DB")
+            assert(db_user!="", "Wrong user of DB")
+        elif db_type=="sqlite":
+            assert(db_name!="", "Wrong name of DB")
+        else:
+            assert(false, "Not supported.")
+
 
     def log(self, message):
         lm.debug("DatabaseManager: {0}".format(message))
@@ -215,7 +245,7 @@ class DatabaseManager(object):
         return data
 
 def main():
-    dbMgr = DatabaseManager('flydive', 'sqlite')
+    dbMgr = DatabaseManager('flydive', 'mysql')
     for i in getOrderedConnections():
         print(i)
 

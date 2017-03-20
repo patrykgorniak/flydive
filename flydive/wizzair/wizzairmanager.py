@@ -32,7 +32,12 @@ class WizzairPlugin(FLPlugin):
         self.cfg = CfgMgr().getConfig()
 
         # READ CONFIG DATA
-        self.db = DatabaseManager(self.cfg['DATABASE']['name'], self.cfg['DATABASE']['type'])
+        self.db = DatabaseManager(self.cfg['DATABASE']['name'],
+                                  self.cfg['DATABASE']['type'],
+                                  self.cfg['DATABASE']['server'],
+                                  self.cfg['DATABASE']['pass'],
+                                  self.cfg['DATABASE']['user'] )
+
         self.month_delta =int(self.cfg['FLIGHT_SEARCH']['month_delta'])
         self.flight_detail_bypass = str(self.cfg['DEBUGGING']['flight_detail_bypass'])=='on'
         self.asyncMode = str(self.cfg['DOWNLOAD_MANAGER']['async_mode'])=='on'
