@@ -24,7 +24,7 @@ class DatabaseManager(object):
                                         poolclass=StaticPool,
                                         encoding='utf-8')
         else:
-            assert(false, "Not supported DB.")
+            assert False, "Not supported DB."
 
         self.engine = create_engine("{}?charset=utf8".format(self.database_uri),
                                     # connect_args={'check_same_thread':False},
@@ -48,14 +48,14 @@ class DatabaseManager(object):
 
         """
         if db_type=="mysql":
-            assert(db_name!="", "Wrong name of DB")
-            assert(db_server!="", "Wrong server of DB")
-            assert(db_pass!="", "Wrong pass of DB")
-            assert(db_user!="", "Wrong user of DB")
+            assert db_name!="", "Wrong name of DB"
+            assert db_server!="", "Wrong server of DB"
+            assert db_pass!="", "Wrong pass of DB"
+            assert db_user!="", "Wrong user of DB"
         elif db_type=="sqlite":
-            assert(db_name!="", "Wrong name of DB")
+            assert db_name!="", "Wrong name of DB"
         else:
-            assert(false, "Not supported.")
+            assert False, "Not supported."
 
 
     def log(self, message):
@@ -118,7 +118,7 @@ class DatabaseManager(object):
     def getConnectionList(self, connectionQueryList = []):
         connectionList = []
         for connection in connectionQueryList:
-            assert(isinstance(connection, Connections), "{} is not type of Connections".format(type(connection)))
+            assert isinstance(connection, Connections), "{} is not type of Connections".format(type(connection))
             connectionList.extend(self.getConnections(connection))
 
         return connectionList
