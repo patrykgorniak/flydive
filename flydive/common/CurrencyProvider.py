@@ -1,3 +1,4 @@
+from common import HttpManager
 import json
 import os
 
@@ -33,6 +34,14 @@ class CurrencyProvider:
                 return Currency(item['CurrencyCode'], item['CurrencyName'], item['CurrencyNumber'])
         return Currency("N/A","N/A","N/A")
 
+    def getCurrencyExchangeRate(self, currencySymbol="", baseCurrenySymbol="PLN"):
+        """TODO: Docstring for getCurrencyRatio.
+        :returns: TODO
+        """
+        url = "http://api.fixer.io/latest?symbols={}&base={}".format(currencySymbol, baseCurrenySymbol)
+        resp = HttpManager.getMethod(url).text
+        json_data = json.loads(resp)
+        return json_data
 
 if __name__ == "__main__":
     tool = getCurrencyProvider()
