@@ -26,11 +26,6 @@ class DatabaseManager(object):
         else:
             assert False, "Not supported DB."
 
-        self.engine = create_engine("{}?charset=utf8".format(self.database_uri),
-                                    # connect_args={'check_same_thread':False},
-                                    poolclass=StaticPool,
-                                    encoding='utf-8')
-                                    #echo=args.verbose_sql, poolclass=SingletonThreadPool)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
@@ -168,16 +163,35 @@ class DatabaseManager(object):
             self.updateFlightDetails(dbFlightDetails, flightDetails)
             # self.log("Object exists in DB -> UPDATED!")
 
-
     def updateFlightDetails(self, flightDetailsOld, flightDetailsNew):
         if not isinstance(flightDetailsNew, FlightDetails):
             raise TypeError('fightDetails is not object of FlightDetails.')
-        
+
         flightDetailsOld.arrival_DateTime = flightDetailsNew.arrival_DateTime
         flightDetailsOld.price = flightDetailsNew.price
         flightDetailsOld.availableCount = flightDetailsNew.availableCount
-        # session = self.Session()
         self.session.commit()
+
+    def queryFlightDetails(self, connection, departure_DateTime):
+        """TODO: Docstring for queryFlightDetails.
+
+        :connection: TODO
+        :filter: TODO
+        :returns: TODO
+s
+        """
+        if not isinstance(connection, Connections):
+            raise TypeError('connection is not object of Connections.')
+
+        a, b = self.session.query(Connections, FlightDetails).\
+                 filter(Connections.src_iata==connection.src_iata).\
+                 filter(Connections.dst_iata==connection.dst_iata).first()
+        print(a)
+        print(b)
+        print()
+                # filter(FlightDetails.departure_DateTime > departure_DateTime).all()
+                # order_by(FlightDetails.departure_DateTime).all()
+        # return fd
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.
@@ -246,8 +260,11 @@ class DatabaseManager(object):
 
 def main():
     dbMgr = DatabaseManager('flydive', 'mysql')
-    for i in getOrderedConnections():
-        print(i)
+    con = Connections(src_iata='WRO', dst_iata='EIN')
+    import datetime
+    print(dbMgr.queryFlightDetails(con, datetime.datetime.now()))
+    # for i in getOrderedConnections():
+    #     print(i)
 
 if __name__ == "__main__":
     main()
