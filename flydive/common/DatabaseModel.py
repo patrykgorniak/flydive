@@ -2,7 +2,7 @@ import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, Date, Boolean, func, ForeignKey, Float
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 import copy
 
 Base = declarative_base()
@@ -59,6 +59,7 @@ class Connections(Base, Helper):
     dst_iata = Column(String(10), nullable=False)
     carrierCode = Column(String(10),ForeignKey('airline.carrierCode'))
     updated = Column(Date, nullable=False, default = func.current_date())
+    flightDetails = relationship("FlightDetails", back_populates="connection")
 
     def __str__(self):
         return "Connection: ID: {0}, from: {1}, to: {2}, airline code: {3}, updated: {4}".format(self.id,
@@ -92,6 +93,7 @@ class FlightDetails(Base):
     isAirportChanged = Column(Boolean, nullable=False)
     inDC = Column(Boolean, nullable=False)
     availableCount = Column(Integer, nullable=True)
+    connection = relationship("Connections", back_populates = "flightDetails")
     # Helper.remove.extend(['src_iata', 'dst_iata'])
 
     #Helpers

@@ -191,7 +191,7 @@ s
         print()
                 # filter(FlightDetails.departure_DateTime > departure_DateTime).all()
                 # order_by(FlightDetails.departure_DateTime).all()
-        # return fd
+        return b
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.
