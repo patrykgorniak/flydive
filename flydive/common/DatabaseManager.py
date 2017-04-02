@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from sqlalchemy_utils import database_exists
 from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base
+from datetime import datetime
 from common import LogManager as lm
 
 class DatabaseManager(object):
@@ -172,26 +173,24 @@ class DatabaseManager(object):
         flightDetailsOld.availableCount = flightDetailsNew.availableCount
         self.session.commit()
 
-    def queryFlightDetails(self, connection, departure_DateTime):
+    def queryFlightDetails(self, connection, departure_DateTime_start = datetime.min, departure_DateTime_end = datetime.max):
         """TODO: Docstring for queryFlightDetails.
 
         :connection: TODO
         :filter: TODO
         :returns: TODO
-s
         """
         if not isinstance(connection, Connections):
             raise TypeError('connection is not object of Connections.')
 
-        a, b = self.session.query(Connections, FlightDetails).\
-                 filter(Connections.src_iata==connection.src_iata).\
-                 filter(Connections.dst_iata==connection.dst_iata).first()
-        print(a)
-        print(b)
-        print()
-                # filter(FlightDetails.departure_DateTime > departure_DateTime).all()
-                # order_by(FlightDetails.departure_DateTime).all()
-        return b
+        FDList = self.session.query(FlightDetails).\
+                join(Connections).\
+                filter(Connections.src_iata==connection.src_iata).\
+                filter(Connections.dst_iata==connection.dst_iata).\
+                filter(FlightDetails.departure_DateTime >= departure_DateTime_start).\
+                filter(FlightDetails.departure_DateTime <= departure_DateTime_end).\
+                order_by(FlightDetails.departure_DateTime).all()
+        return FDList
 
     def addAirline(self, airline):
         """TODO: Docstring for addAirline.

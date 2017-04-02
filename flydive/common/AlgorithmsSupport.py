@@ -30,6 +30,10 @@ def BFS(graph, depth, start, end):
     # file.close()
     return paths
 
+
+def findFlights(self, paths):
+    pass
+
 if __name__ == "__main__":
     depth = 4 if len(sys.argv) == 1 else int(sys.argv[-1])
     if depth > 4:

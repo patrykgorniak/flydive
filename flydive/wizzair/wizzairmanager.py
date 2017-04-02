@@ -57,6 +57,69 @@ class WizzairPlugin(FLPlugin):
     def log(self, message):
         lm.debug("WizzairPlugin: {0}".format(message))
 
+    def findFlight(self, flightFrom, flightDetails, criteria):
+        """TODO: Docstring for findFlight.
+
+        :flightFrom: TODO
+        :next_airport_key: TODO
+        :flightDetails: TODO
+        :criteria: TODO
+        :returns: TODO
+
+        """
+        timedelta_min = datetime.timedelta(hour=criteria['time_change_min'])
+        timedelta_max = datetime.timedelta(hour=criteria['time_change_max'])
+        found_flights = [x for x in flightDetails if x.departure_DateTime >= flightFrom.arrival_DateTime + timedelta_min and
+         x.departure_DateTime <= flightFrom.arrival_DateTime + timedelta_max]
+
+        return found_flights
+
+    def schedulePath(self,  airportList, flightDetails, criteria = { 'time_change_min': 2, 'time_change_max': 12 }):
+        """TODO: Docstring for schedulePath.
+
+        :path: TODO
+        :returns: TODO
+
+        """
+        scheduledFlights = []
+
+        for start_flight in flightDetails[airportList[0]]:
+            pass
+
+        
+        return scheduledFlights
+
+    def runAlgorithm(self, paths):
+        """TODO: Docstring for runAlgorithm.
+
+        :paths: TODO
+        :returns: TODO
+
+        """
+        max_time_change = 4
+
+        connections = {}
+        flightDetails = {}
+        scheduledFlights = {}
+        for path in paths:
+            airports = []
+            for i in range(len(path) - 1):
+                from_iata = path[i]
+                to_iata = path[i+1]
+                key = "{}-{}".format(from_iata, to_iata)
+                airports.append(key)
+                if key not in connections:
+                    value = Connections(src_iata = from_iata, dst_iata = to_iata)
+                    connections[key] = value
+                    flightDetails[key] = self.db.queryFlightDetails(value, datetime.datetime.now(),
+                                                                    datetime.datetime.now() + monthdelta(1))
+            scheduledFlight[path] = self.schedulePath(airports, flightDetails)
+
+
+        for elem in db:
+            self.log("My data: {}".format(elem))
+            self.log("My data: {}".format(elem.connection))
+
     def run(self):
         self.__initAirline()
         self.connections = []
@@ -75,6 +138,8 @@ class WizzairPlugin(FLPlugin):
         for src_iata in self.departure_cities:
             for dst_iata in self.arrival_cities:
                 paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
+
+        self.runAlgorithm(paths)
 
         connectionQueryList = self.prepareConnectionsQuery(paths)
         self.connections.extend(self.db.getConnectionList(connectionQueryList))
