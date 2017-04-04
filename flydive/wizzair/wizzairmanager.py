@@ -57,7 +57,27 @@ class WizzairPlugin(FLPlugin):
     def log(self, message):
         lm.debug("WizzairPlugin: {0}".format(message))
 
-    def findFlight(self, flightFrom, flightDetails, criteria):
+    def build_tree(self, previousFlight, flightList, last_flight, flightDetailList, criteria):
+        """TODO: Docstring for build_tree.
+
+        :current_flight: TODO
+        :flightList: TODO
+        :last_flight: TODO
+        :flightDetailList: TODO
+        :criteria: TODO
+        :returns: TODO
+
+        """
+        self.log("Previous flight: {}".format(previous_flight))
+        self.log("Flight list: {}".format(flightList))
+        self.log("Last flight: {}".format(last_flight))
+
+        if flightList[0] == last_flight:
+            return { last_flight : self.findFlight(previousFlight, flightDetailList, criteria) }
+        else:
+            return self.build_tree(flightList[0], flightList[1:], flightList[-1], flightDetailList, criteria)
+
+    def findFlight(self, previousFlight, flightDetails, criteria):
         """TODO: Docstring for findFlight.
 
         :flightFrom: TODO
@@ -69,8 +89,8 @@ class WizzairPlugin(FLPlugin):
         """
         timedelta_min = datetime.timedelta(hour=criteria['time_change_min'])
         timedelta_max = datetime.timedelta(hour=criteria['time_change_max'])
-        found_flights = [x for x in flightDetails if x.departure_DateTime >= flightFrom.arrival_DateTime + timedelta_min and
-         x.departure_DateTime <= flightFrom.arrival_DateTime + timedelta_max]
+        found_flights = [x for x in flightDetails if x.departure_DateTime >= previousFlight.arrival_DateTime + timedelta_min and
+         x.departure_DateTime <= previousFlight.arrival_DateTime + timedelta_max]
 
         return found_flights
 
@@ -84,9 +104,11 @@ class WizzairPlugin(FLPlugin):
         scheduledFlights = []
 
         for start_flight in flightDetails[airportList[0]]:
-            pass
-
-        
+            flightList = []
+            flightList.append({ airportList[0]: start_flight })
+            previousFlight = start_flight
+            for airport in airportList[1:]:
+                pass
         return scheduledFlights
 
     def runAlgorithm(self, paths):
