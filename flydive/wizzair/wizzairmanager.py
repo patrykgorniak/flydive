@@ -29,6 +29,7 @@ class WizzairPlugin(FLPlugin):
         self._dlMgr = WizzairDl()
         self.parser = WizzairParser()
         self.geo_name = GeoNameProvider()
+        # self.flse = FLSearchEngine()
         self.cfg = CfgMgr().getConfig()
 
         # READ CONFIG DATA
@@ -50,138 +51,52 @@ class WizzairPlugin(FLPlugin):
         self.currentDate = datetime.datetime.now()
         self.session = SessionManager(self.airline_name)
 
-        if not self.flight_detail_bypass and self.asyncMode and self._asyncDlMgr is not None:
-            self.receiver = threading.Thread(target=self.asyncReceiver)
-            self.receiver.start()
+        self.__initAirline()
 
     def log(self, message):
         lm.debug("WizzairPlugin: {0}".format(message))
 
-    def build_tree(self, scheduledFlights, previousFlight, flightList, lastFlight, flightDetailList, criteria):
-        """TODO: Docstring for build_tree.
+    def initAirports(self):
+        self.__fetchAndAddAirports()
+        self.airportsReady = True
 
-        :current_flight: list of possible previous flight change in format FlighDetails
-        :flightList: list of flights in format FROM-TO
-        :last_flight: last flight on the list in format FROM-TO
-        :flightDetailList: list of all flight details 
-        :criteria: criteria for searching such as time_change_{min, max}
-        :returns: TODO
+    def initConnections(self):
+        assert self.airportsReady == True, "Airports were not initialized!"
+        self.__fetchAndAddConnections()
+        self.connectionsReady = True
 
-        """
-        # self.log("scheduled flight: {}".format(scheduledFlights))
-        # self.log("Previous flight: {}".format(previousFlight))
-        # self.log("Flight list: {}".format(flightList))
-        # self.log("Last flight: {}".format(lastFlight))
+    def run(self, paths, connectionList, config = { 'date_from': -1, 'date_to': -1 }):
+        if not self.flight_detail_bypass and self.asyncMode and self._asyncDlMgr is not None:
+            self.receiver = threading.Thread(target=self.asyncReceiver)
+            self.receiver.start()
 
-        if flightList[0] == lastFlight:
-            scheduledFlights[flightList[0]] = self.findFlight(previousFlight, flightDetailList[flightList[0]], criteria)
-            return scheduledFlights
-        else:
-            scheduledFlights[flightList[0]] = self.findFlight(previousFlight, flightDetailList, criteria)
-            return self.build_tree(scheduledFlights, flightList[0], flightList[1:], flightList[-1], flightDetailList, criteria)
+        assert self.airportsReady == True, "Airports were not initialized!"
+        assert self.connectionsReady == True, "Connections were not initialized!"
+        assert config['date_from'] != -1 and config['date_to'] != -1, "Wrong config!"
 
-    def findFlight(self, previousFlight, flightDetails, criteria):
-        """TODO: Docstring for findFlight.
-
-        :flightFrom: TODO
-        :next_airport_key: TODO
-        :flightDetails: TODO
-        :criteria: TODO
-        :returns: TODO
-
-        """
-        timedelta_min = datetime.timedelta(hours=criteria['time_change_min'])
-        timedelta_max = datetime.timedelta(hours=criteria['time_change_max'])
-        found_flights = [x for x in flightDetails if x.departure_DateTime >= previousFlight.arrival_DateTime + timedelta_min and
-         x.departure_DateTime <= previousFlight.arrival_DateTime + timedelta_max]
-
-        return found_flights
-
-    def schedulePath(self,  airportList, flightDetails, criteria = { 'time_change_min': 2, 'time_change_max': 12 }):
-        """TODO: Docstring for schedulePath.
-
-        :path: TODO
-        :returns: TODO
-
-        """
-        self.log(airportList)
-        scheduledFlights = []
-
-        for start_flight in flightDetails[airportList[0]]:
-            scheduled = {}
-            scheduled[airportList[0]] = [start_flight]
-            scheduledFlights.append(self.build_tree(scheduled, start_flight, airportList[1:], airportList[-1], flightDetails,
-                    criteria ))
-        return scheduledFlights
-
-    def runAlgorithm(self, paths):
-        """TODO: Docstring for runAlgorithm.
-
-        :paths: TODO
-        :returns: TODO
-
-        """
-        max_time_change = 4
-
-        connections = {}
-        flightDetails = {}
-        scheduledFlights = {}
-        for path in paths[1:-1]:
-            airports = []
-            main_key = "{}-{}".format(path[0], path[-1])
-            for i in range(len(path) - 1):
-                from_iata = path[i]
-                to_iata = path[i+1]
-                key = "{}-{}".format(from_iata, to_iata)
-                airports.append(key)
-                if key not in connections:
-                    value = Connections(src_iata = from_iata, dst_iata = to_iata)
-                    connections[key] = value
-                    flightDetails[key] = self.db.queryFlightDetails(value, datetime.datetime.now(),
-                                                                    datetime.datetime.now() + monthdelta(1))
-            scheduledFlights[main_key] = self.schedulePath(airports, flightDetails)
-            self.log(scheduledFlights[main_key][0])
-            for key in scheduledFlights[main_key][0]:
-                self.log(key)
-                for value in scheduledFlights[main_key][0][key]:
-                    self.log(value)
-            return
-
-
-        # for elem in db:
-        #     self.log("My data: {}".format(elem))
-        #     self.log("My data: {}".format(elem.connection))
-
-    def run(self):
-        self.__initAirline()
         self.connections = []
         self.proceedList = []
-        paths = []
         # date_from = datetime.datetime(2016,12,10) # this is only for test
-        delay_data = datetime.timedelta(days=7)
-        date_from = self.currentDate + delay_data;
-        date_to = date_from + monthdelta(self.month_delta)
+        # delay_data = datetime.timedelta(days=7)
+        date_from = config['date_from'] #self.currentDate + delay_data;
+        date_to = config['date_to'] #date_from + monthdelta(self.month_delta)
         self.log("Flights update between: {} - {}".format(date_from, date_to))
 
-        self.__fetchAndAddAirports()
-        self.__fetchAndAddConnections()
-        graph = tools.dumpConnectionsToGraph(self._dlMgr.getConnections(), self.excluded_cities)
+        # graph = tools.dumpConnectionsToGraph(self._dlMgr.getConnections(), self.excluded_cities)
 
-        for src_iata in self.departure_cities:
-            for dst_iata in self.arrival_cities:
-                paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
+        # for src_iata in self.departure_cities:
+        #     for dst_iata in self.arrival_cities:
+        #         paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
 
-        file = open("paths.txt", "w")
-        for path in paths:
-            file.write("{}\n".format(path))
-        file.close()
+        # file = open("paths.txt", "w")
+        # for path in paths:
+        #     file.write("{}\n".format(path))
+        # file.close()
+        # return
+        # self.collectFlighDetails(paths)
 
-        self.runAlgorithm(paths)
-        return 
-
-        connectionQueryList = self.prepareConnectionsQuery(paths)
-        self.connections.extend(self.db.getConnectionList(connectionQueryList))
-
+        self.connections.extend(self.prepareConnectionsQuery(paths, connectionList))
+        # self.connections.extend(self.db.getConnectionList(connectionQueryList))
 
         if self.dump_restore_session and self.session.isSaved():
             self.connections.extend(self.session.restoreSession())
@@ -216,12 +131,16 @@ class WizzairPlugin(FLPlugin):
             self.receiver.join()
         self.log("Total time: {}".format(datetime.datetime.now() - self.currentDate))
 
-    def prepareConnectionsQuery(self, paths):
+    def prepareConnectionsQuery(self, paths, connectionList):
         queryList = []
         for path in paths:
             for i in range(len(path) - 1):
-                queryList.append(Connections(src_iata=path[i], dst_iata=path[i+1], carrierCode = self.carrierCode))
-                queryList.append(Connections(src_iata=path[i+1], dst_iata=path[i], carrierCode = self.carrierCode))
+                queryList.extend([x for x in connectionList if (x.src_iata==path[i] and x.dst_iata==path[i+1] and
+                                   x.carrierCode==self.carrierCode) or (x.src_iata==path[i+1] and x.dst_iata==path[i] and
+                                   x.carrierCode==self.carrierCode) ])
+                # connection = Connections(src_iata=path[i], dst_iata=path[i+1], carrierCode = self.carrierCode)
+                # queryList.append(connection)
+                # queryList.append(Connections(src_iata=path[i+1], dst_iata=path[i], carrierCode = self.carrierCode))
         return queryList
 
     def __asyncGetFlightDetails(self, flight):

@@ -18,6 +18,15 @@ class FLPluginManager(object):
         lm.debug("New plugin registered: {}".format(FLPluginType))
         self.plugins.append(plugin)
 
-    def start(self):
+    def initConnections(self):
         for plugin in self.plugins:
-            plugin.run()
+            plugin.initConnections()
+
+    def initAirports(self):
+        for plugin in self.plugins:
+            plugin.initAirports()
+
+    def start(self, flightTree, connectionList, config):
+        # TODO: change to parallel, use threads
+        for plugin in self.plugins:
+            plugin.run(flightTree, connectionList, config)

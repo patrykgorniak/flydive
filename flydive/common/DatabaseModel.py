@@ -79,7 +79,7 @@ class Connections(Base, Helper):
     #     del dict['_sa_instance_state']
     #     return dict
 
-class FlightDetails(Base):
+class FlightDetails(Base, Helper):
     __tablename__ = 'flightdetails'
 
     id = Column(Integer, primary_key=True )

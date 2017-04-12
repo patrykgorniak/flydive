@@ -5,6 +5,7 @@ from common.DatabaseModel import Connections
 from common import LogManager as lm
 from datetime import datetime
 
+# TODO: merge this JSON encoder with FLJsonEncoder from tools
 class SessionEncoder(json.JSONEncoder):
     def default(self, objs):
         """TODO: Docstring for default.

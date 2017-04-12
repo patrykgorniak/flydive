@@ -128,7 +128,7 @@ class DatabaseManager(object):
         """
 
         # session = self.Session()
-        connectionsList = self.session.query(Connections).filter_by(**(connection.to_dict()))
+        connectionsList = self.session.query(Connections).filter_by(**(connection.to_dict())).all()
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 
@@ -171,9 +171,10 @@ class DatabaseManager(object):
         flightDetailsOld.arrival_DateTime = flightDetailsNew.arrival_DateTime
         flightDetailsOld.price = flightDetailsNew.price
         flightDetailsOld.availableCount = flightDetailsNew.availableCount
+        flightDetailsOld.currency = flightDetailsNew.currency
         self.session.commit()
 
-    def queryFlightDetails(self, connection, departure_DateTime_start = datetime.min, departure_DateTime_end = datetime.max):
+    def queryFlightDetails(self, connection, discountClub, departure_DateTime_start = datetime.min, departure_DateTime_end = datetime.max):
         """TODO: Docstring for queryFlightDetails.
 
         :connection: TODO
@@ -189,6 +190,7 @@ class DatabaseManager(object):
                 filter(Connections.dst_iata==connection.dst_iata).\
                 filter(FlightDetails.departure_DateTime >= departure_DateTime_start).\
                 filter(FlightDetails.departure_DateTime <= departure_DateTime_end).\
+                filter(FlightDetails.inDC == discountClub).\
                 order_by(FlightDetails.departure_DateTime).all()
         return FDList
 
@@ -237,7 +239,7 @@ class DatabaseManager(object):
         elif isinstance(entry, Airport):
             filter_by = { 'iata': entry.iata }
         elif isinstance(entry, Connections):
-            filter_by = { 'src_iata': entry.src_iata, 'dst_iata': entry.dst_iata }
+            filter_by = { 'src_iata': entry.src_iata, 'dst_iata': entry.dst_iata, 'carrierCode': entry.carrierCode }
         else:
             raise TypeError('error')
 
