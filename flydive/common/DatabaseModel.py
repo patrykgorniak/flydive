@@ -41,7 +41,7 @@ class Airport(Base):
     currency_code = Column(String(150))
     currency_name = Column(String(150))
     currency_number = Column(String(150))
-    
+
     def __str__(self):
         return "Airport: IATA: {0}, name: {1}, latitude: {2}, longitute: {3}, country: {4} country code: {} currency code: {}".format(self.iata,
                                                                                                                                        self.name,
@@ -114,6 +114,54 @@ class FlightDetails(Base, Helper):
                                                                                   self.dst_iata,
                                                                                   self.inDC,
                                                                                   self.availableCount)
+class User(Base, Helper):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    login = Column(String(100), nullable = False)
+    password = Column(String(100), nullable = False)
+    fullname = Column(String(100), nullable = False)
+    surname = Column(String(100), nullable = False)
+    email = Column(String(150), nullable = False)
+
+    def __str__(self):
+        return "User: Login: {}, Name: {} {}, E-Mail: {}\n".format(
+            self.login,
+            self.fullname,
+            self.surname,
+            self.email )
+
+class WatchFlight(Base, Helper):
+    __tablename__ = 'watchFlight'
+
+    id = Column(Integer, primary_key=True)
+    src_iata = Column(String(10),ForeignKey('airport.iata'))
+    dst_iata = Column(String(10),ForeignKey('airport.iata'))
+
+    def __str__(self):
+        return "WatchDirections: ID: {}, src_iata: {}, dst_iata: {}\n".format(self.id,
+                                                                              self.src_iata,
+                                                                              self.dst_iata)
+
+class WatchConfig(Base, Helper):
+    __tablename__ = 'watchFonfig'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    watchFlight_id = Column(Integer, ForeignKey('watchFlight.id'))
+    mode = Column(Integer, nullable = False)
+    datetime_start = Column(DateTime, nullable=False)
+    datetime_end = Column(DateTime, nullable=False)
+    days = Column(Integer, nullable=False)
+
+    def __str__(self):
+        return "WatchConfig: ID: {}, User_ID: {}, WatchFlight_ID: {}, mode: {}, \
+                datatime_start: {}, datetime_end {}, days: {}".format(
+                    self.id,
+                    self.user_id,
+                    self.watchFlight_id,
+                    self.mode,
+                    self.datetime_start,
+                    self.datetime_end,
+                    self.days )
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')

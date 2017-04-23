@@ -1,5 +1,6 @@
 import datetime
 from common import LogManager as lm
+from common.ConfigurationManager import CfgMgr
 
 class FLSearchEngine():
 
@@ -7,6 +8,7 @@ class FLSearchEngine():
 
     def __init__(self):
         """TODO: to be defined1. """
+        self.global_cfg = CfgMgr().getConfig()
 
     def log(self, message):
         lm.debug("FLSearchEngine: {0}".format(message))
@@ -26,14 +28,25 @@ class FLSearchEngine():
         # self.log("Previous flight: {}".format(previousFlight))
         # self.log("Flight list: {}".format(flightList))
         # self.log("Last flight: {}".format(lastFlight))
+        scheduledFlights['departure_DateTime'] = previousFlight.departure_DateTime
 
         for flightChange in flightList:
             scheduledFlights[flightChange] = self.__findFlight(previousFlight, flightDetailList[flightChange], criteria)
 
             if len(scheduledFlights[flightChange]) == 0: # No flights were found from flightChange, mark flight as invalid
+                scheduledFlights[flightChange] = self.__findFlight(previousFlight, flightDetailList[flightChange], {
+                    'time_change_min': 2, 'time_change_max': 72 })
                 scheduledFlights['s'] = 0
+
+                if len(scheduledFlights[flightChange]) > 0 :
+                    previousFlight = scheduledFlights[flightChange][0]
             else:
                 previousFlight = scheduledFlights[flightChange][0]
+
+            if len(scheduledFlights[flightChange]) == 0:
+                return None
+
+        scheduledFlights['arrival_DateTime'] = scheduledFlights[lastFlight][0].arrival_DateTime
         return scheduledFlights
 
     def __findFlight(self, previousFlight, flightDetails, criteria):
@@ -48,6 +61,7 @@ class FLSearchEngine():
         """
         timedelta_min = datetime.timedelta(hours=criteria['time_change_min'])
         timedelta_max = datetime.timedelta(hours=criteria['time_change_max'])
+
         found_flights = [x for x in flightDetails if x.departure_DateTime >= previousFlight.arrival_DateTime + timedelta_min and
          x.departure_DateTime <= previousFlight.arrival_DateTime + timedelta_max]
 
@@ -66,8 +80,9 @@ class FLSearchEngine():
         for start_flight in flightDetails[airportList[0]]:
             scheduled = {}
             scheduled[airportList[0]] = [start_flight]
-            scheduledFlights.append(self.__build_tree(scheduled, start_flight, airportList[1:], airportList[-1], flightDetails,
-                    criteria ))
+            flightTree = self.__build_tree(scheduled, start_flight, airportList[1:], airportList[-1], flightDetails, criteria )
+            if flightTree is not None:
+                scheduledFlights.append(flightTree)
 
         return scheduledFlights #self.__validateData(scheduledFlights)
 
@@ -79,10 +94,115 @@ class FLSearchEngine():
 
         """
         for flight in scheduledFlights:
-            flight['Status'] = 1
+            flight['s'] = 1
             for changeName, changeList in flight.items():
                 if type(changeList) is list and len(changeList) == 0:
-                    flight['Status'] = 0
+                    flight['s'] = 0
                     break
 
         return scheduledFlights
+
+    def splitFlight(self, direction, flightSuite):
+        """TODO: Docstring for splitFlight.
+
+        :flightSuite: TODO
+        :returns: TODO
+
+        """
+        startFrom = direction.split("-")[0]
+        toList = {}
+        backList = {}
+        for flightDirection, flightList in flightSuite.items():
+            if flightDirection.split("-")[0] == startFrom:
+                toList[flightDirection] = flightList
+            else:
+                backList[flightDirection] = flightList
+
+        return toList, backList
+
+    def findFlights(self, toFlightList, fromFlightList, config):
+        """TODO: Docstring for findFlights.
+
+        :toFlightList: TODO
+        :fromFlightList: TODO
+        :config: TODO
+        :returns: TODO
+
+        """
+        departFlight = {}
+        arrivalFlight = {}
+        max_change_time = int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
+        flex_time = int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
+
+        start_date = datetime.datetime.combine(config['start'], config['time_start'])
+        back_date = datetime.datetime.combine(config['end'], config['time_end'])
+
+        for flightName, flightList  in toFlightList.items():
+           tmp = [x for x in flightList if (
+               x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
+               x['departure_DateTime'] >= start_date and
+               x['departure_DateTime'] <= start_date + datetime.timedelta(hours=fex_time)
+           ) ]
+
+           if len(tmp) > 0:
+               departFlight[flightName] = tmp
+
+        for flightName, flightList  in fromFlightList.items():
+           tmp = [x for x in flightList if (
+               x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
+               x['arrival_DateTime'] >= back_date - datetime.timedelta(hours=flex_time) and
+               x['arrival_DateTime'] <= back_date
+           ) ]
+
+           if len(tmp) > 0:
+               arrivalFlight[flightName] = tmp
+
+        return {'to': departFlight, 'from': arrivalFlight, 'config': config}
+
+    def findWeekendFlights(self, toFlightList, fromFlightList, config, weekendList):
+        """TODO: Docstring for findFlights.
+
+        :toFlightList: TODO
+        :fromFlightList: TODO
+        :config: TODO
+        :returns: TODO
+
+        """
+        max_change_time = int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
+        flex_time = int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
+
+        departFlight = {}
+        arrivalFlight = {}
+
+
+        list = []
+        for weekend in weekendList:
+            l1 = []
+            l2 = []
+            tmpFlightList = { 'w': weekend }
+            start_date = datetime.datetime.combine(weekend[0], config['time_start'])
+            back_date = datetime.datetime.combine(weekend[1], config['time_end'])
+
+            for (toFlightName, flightList) in toFlightList.items():
+                toFlights= [x for x in flightList if (
+                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
+                    x['departure_DateTime'] >= start_date and x['departure_DateTime'] <= start_date + datetime.timedelta(hours = flex_time)
+                )]
+
+                if len(toFlights) > 0:
+                    l1.append({toFlightName: toFlights})
+
+            for (fromFlightName, flightList) in fromFlightList.items():
+                fromFlights = [x for x in flightList if (
+                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
+                    x['arrival_DateTime'] >= back_date - datetime.timedelta(hours = flex_time) and x['arrival_DateTime'] <= back_date
+                )]
+                if len(fromFlights) > 0:
+                    l2.append({fromFlightName: fromFlights})
+
+            if len(l1) > 0 and len(l2) > 0:
+                tmpFlightList['to'] = l1
+                tmpFlightList['from'] = l2
+            list.append(tmpFlightList)
+
+        return list

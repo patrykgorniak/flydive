@@ -27,6 +27,7 @@ class CurrencyProvider:
         self.dir = os.path.dirname(__file__)
         self.file_data = open(os.path.join(self.dir, "currencies.json") ,'r').read()
         self.currency_db = json.loads(self.file_data)
+        self.baseCurrencySymbol = "PLN"
 
     def getCurrency(self, countryName = None):
         for item in self.currency_db['Currencies']:
@@ -34,13 +35,14 @@ class CurrencyProvider:
                 return Currency(item['CurrencyCode'], item['CurrencyName'], item['CurrencyNumber'])
         return Currency("N/A","N/A","N/A")
 
-    def getCurrencyExchangeRate(self, currencySymbol="", baseCurrenySymbol="PLN"):
+    def getCurrencyExchangeRate(self, currencySymbol="", baseCurrencySymbol = "PLN"):
         """TODO: Docstring for getCurrencyRatio.
         :returns: TODO
         """
-        url = "http://api.fixer.io/latest?symbols={}&base={}".format(currencySymbol, baseCurrenySymbol)
+        url = "http://api.fixer.io/latest?symbols={}&base={}".format(currencySymbol, baseCurrencySymbol)
         resp = HttpManager.getMethod(url).text
-        json_data = json.loads(resp)
+        json_data = json.loads(resp)['rates']
+
         return json_data
 
 if __name__ == "__main__":

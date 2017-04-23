@@ -36,29 +36,50 @@ class CfgMgr:
                 'author_mail': 'patryk.lukasz.gorniak@gmail.com',
                 'app_name': 'FlyDive',
                 'version': 0.1,
+                'dump_restore_session': 'off'
             }
             config['PLUGINS'] = {
                 'wizzair': 'on',
                 'ryanair': 'off'
             }
 
+            config['DOWNLOAD_MANAGER'] = {
+                'workers': 20,
+                'async_mode': 'on'
+            }
+
             config['DATABASE'] = {
                 'name': 'flydive',
-                'type': 'sqlite'
+                'type': 'sqlite',
+                'server':'',
+                'user':'',
+                'pass':''
             }
 
             config['LOGGER'] = {
                 'config_name': 'logger.cfg',
                 'config_dir': 'configs',
-                'debug': 'off'
+                'debug': 'off',
+                'dump_files': 'off'
             }
 
             config['DEBUGGING'] = {
-                'status': 'online'
+                'status': 'online',
+                'flight_detail_bypass':'off'
             }
 
-            config['FLIGHTS'] = {
-                'month_delta': 3
+            config['FLIGHT_SEARCH'] = {
+                'month_delta': 3,
+                'departure_cities': ["WAW", "WRO"],
+                'arrival_cities': ["EIN"],
+                'excluded_cities': ["BOD"],
+                'search_depth': 3,
+                'max_flight_change_timeH': 12,
+                'flex_time': 12
+            }
+
+            config['GEO_NAME_PROVIDER'] = {
+                'user': 'flydive'
             }
 
             with open(self.path,'w') as configfile:

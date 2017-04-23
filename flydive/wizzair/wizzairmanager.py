@@ -133,11 +133,12 @@ class WizzairPlugin(FLPlugin):
 
     def prepareConnectionsQuery(self, paths, connectionList):
         queryList = []
-        for path in paths:
-            for i in range(len(path) - 1):
-                queryList.extend([x for x in connectionList if (x.src_iata==path[i] and x.dst_iata==path[i+1] and
-                                   x.carrierCode==self.carrierCode) or (x.src_iata==path[i+1] and x.dst_iata==path[i] and
-                                   x.carrierCode==self.carrierCode) ])
+        for destName, flightDetails in paths.items():
+            for path in flightDetails:
+                for i in range(len(path) - 1):
+                    queryList.extend([x for x in connectionList if (x.src_iata==path[i] and x.dst_iata==path[i+1] and
+                                       x.carrierCode==self.carrierCode) or (x.src_iata==path[i+1] and x.dst_iata==path[i] and
+                                       x.carrierCode==self.carrierCode) ])
                 # connection = Connections(src_iata=path[i], dst_iata=path[i+1], carrierCode = self.carrierCode)
                 # queryList.append(connection)
                 # queryList.append(Connections(src_iata=path[i+1], dst_iata=path[i], carrierCode = self.carrierCode))

@@ -52,7 +52,14 @@ class FLJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, FlightDetails):
             return obj.to_dict()
+
         if isinstance(obj, datetime.datetime):
+            return str(obj)
+
+        if isinstance(obj, datetime.date):
+            return str(obj)
+
+        if isinstance(obj, datetime.time):
             return str(obj)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)

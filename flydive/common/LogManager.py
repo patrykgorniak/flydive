@@ -22,3 +22,9 @@ def debug(log):
     """
     if CfgMgr().getConfig()['LOGGER']['debug'] == 'on':
         logHandler.debug(log)
+
+def enabled():
+     return CfgMgr().getConfig()['LOGGER']['debug'] == 'on'
+
+def dump_files():
+     return CfgMgr().getConfig()['LOGGER']['debug_files'] == 'on'
