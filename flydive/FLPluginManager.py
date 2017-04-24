@@ -13,7 +13,7 @@ class FLPluginManager(object):
 
     def registerPlugin(self, FLPluginType):
         plugin = FLPluginType(self.asyncDlMgr)
-        assert(isinstance(plugin, FLPlugin), "{} is not type of FLPlugin.".format(plugin))
+        assert isinstance(plugin, FLPlugin), "{} is not type of FLPlugin.".format(plugin)
 
         lm.debug("New plugin registered: {}".format(FLPluginType))
         self.plugins.append(plugin)

@@ -30,12 +30,12 @@ class FlyDive():
         newsletter_CfgList = self.newsletterMgr.get()
         self.flydiveScheduler.dumpToFile("News.txt", newsletter_CfgList)
 
-        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree()
+        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree(list(newsletter_CfgList.keys()))
         # Register all FlyDive plugins
         config = self.flydiveScheduler.getScheduleConfiguration()
 
-        self.flydivePluginManager.start(flightTree, connectionList, config)
-        scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config, newsletter_CfgList)
+        # self.flydivePluginManager.start(flightTree, connectionList, config)
+        scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config)
         self.flydiveScheduler.dumpToFile("scheduled.txt", scheduledFlights)
 
         filteredFlights = self.flydiveScheduler.removeEmptyFlights(scheduledFlights)
@@ -46,6 +46,6 @@ class FlyDive():
 
         config = self.flydiveScheduler.getDefaultConfig()
 
-        filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, config)
+        filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, newsletter_CfgList)
         self.flydiveScheduler.dumpToFile("last_step.txt", filteredFlightPack)
         return

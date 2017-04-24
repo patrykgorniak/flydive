@@ -36,7 +36,7 @@ class FlightScheduler():
     def log(self, message):
         lm.debug("FlightScheduler: {0}".format(message))
 
-    def collectFlighDetails(self, directionListSuite, config, newsletter_CfgList):
+    def collectFlighDetails(self, directionListSuite, config):
         date_from = config['date_from'] #datetime.datetime.now() + monthdelta(config['deltaTimeMonths_from'])
         date_to = config['date_to'] #date_from + monthdelta(config['deltaTimeMonths_to'])
 
@@ -70,7 +70,7 @@ class FlightScheduler():
                 scheduledFlights[main_key] = self.flse.schedulePath(airports, flightDetails)
                 scheduledFlights[back_main_key] = self.flse.schedulePath(back_airports, flightDetails)
             # scheduledFlights['config'] = newsletter_CfgList[dest]
-            scheduledFlightSuite[dest] =  scheduledFlights #{ main_key : scheduledFlights[main_key], back_main_key: scheduledFlights[back_main_key] }
+            scheduledFlightSuite[dest] = scheduledFlights #{ main_key : scheduledFlights[main_key], back_main_key: scheduledFlights[back_main_key] }
 
             # for directionName, directionList in scheduledFlights.items():
             #     for direction in directionList:
@@ -84,17 +84,23 @@ class FlightScheduler():
 
         return scheduledFlightSuite
 
-    def getConnectionsTree(self):
+    def getConnectionsTree(self, directionList):
+        assert isinstance(directionList, list), "DirectionList is not List."
         paths = {}
         # paths = []
         connectionList = self.db.getOrderedConnections()
         graph = tools.dumpConnectionsToGraph(connectionList, self.excluded_cities)
 
-        for src_iata in self.departure_cities:
-            for dst_iata in self.arrival_cities:
-                k = "{}-{}".format(src_iata, dst_iata)
-                paths[k] = BFS(graph, self.search_depth, src_iata, dst_iata)
-                # paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
+        for direction in directionList:
+            src_iata = direction.split("-")[0]
+            dst_iata = direction.split("-")[1]
+            paths[direction] = BFS(graph, self.search_depth, src_iata, dst_iata)
+
+        # for src_iata in self.departure_cities:
+        #     for dst_iata in self.arrival_cities:
+        #         k = "{}-{}".format(src_iata, dst_iata)
+        #         paths[k] = BFS(graph, self.search_depth, src_iata, dst_iata)
+        #         # paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
 
         if lm.enabled():
             with open(os.path.join(self.log_dir, "connectionsTree.txt"),'w') as f:
@@ -241,11 +247,14 @@ class FlightScheduler():
         filteredFlightPack = {}
         for flightSuiteName, flightSuite in flightSuiteList.items():
             if flightSuiteName in configList:
-                config = configList[flightSuiteName]
+                configs = configList[flightSuiteName]
             else:
-                config = configList['default']
+                configs = [configList['default']]
 
-            filteredFlightPack[flightSuiteName] = self.filterFlights(flightSuiteName, flightSuite, config)
+            lst = []
+            for config in configs['configs']:
+                lst.append({ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) })
+            filteredFlightPack[flightSuiteName] = lst #{ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) }
 
         return filteredFlightPack
 

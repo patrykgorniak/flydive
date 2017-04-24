@@ -141,7 +141,7 @@ class FLSearchEngine():
            tmp = [x for x in flightList if (
                x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
                x['departure_DateTime'] >= start_date and
-               x['departure_DateTime'] <= start_date + datetime.timedelta(hours=fex_time)
+               x['departure_DateTime'] <= start_date + datetime.timedelta(hours=flex_time)
            ) ]
 
            if len(tmp) > 0:
@@ -157,7 +157,7 @@ class FLSearchEngine():
            if len(tmp) > 0:
                arrivalFlight[flightName] = tmp
 
-        return {'to': departFlight, 'from': arrivalFlight, 'config': config}
+        return {'to': departFlight, 'from': arrivalFlight}
 
     def findWeekendFlights(self, toFlightList, fromFlightList, config, weekendList):
         """TODO: Docstring for findFlights.

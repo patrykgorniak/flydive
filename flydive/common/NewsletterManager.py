@@ -14,15 +14,11 @@ class NewsletterManager():
 
     def date_hook(self, json_dict):
         for (key, value) in json_dict.items():
-            try:
-                json_dict[key] = datetime.date.strptime(value, "%Y-%m-%d) %H:%M:%S")
-            except:
-                pass
+            if key in ['start', 'end']:
+                json_dict[key] = datetime.datetime.strptime(value, "%Y-%m-%d").date()
 
-            try:
-                json_dict[key] = datetime.time.strptime(value, "%H:%M:%S")
-            except:
-                pass
+            if key in ['time_start', 'time_end']:
+                json_dict[key] = datetime.datetime.strptime(value, "%H:%M:%S").time()
 
         return json_dict
 
