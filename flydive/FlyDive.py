@@ -16,7 +16,11 @@ class FlyDive():
         self.newsletterMgr = NewsletterManager()
 
     def registerPlugins(self):
-        self.flydivePluginManager.registerPlugin(WizzairPlugin)
+        if self.cfg['PLUGINS']['wizzair']=='on':
+            self.flydivePluginManager.registerPlugin(WizzairPlugin)
+
+        if self.cfg['PLUGINS']['ryanair']=='on':
+            self.flydivePluginManager.registerPlugin(RyanairPlugin)
 
     def setupLogger(self, cfg):
         LogMgr.init(dirname=cfg['config_dir'], configFileName=cfg['config_name'])
