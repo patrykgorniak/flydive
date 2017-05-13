@@ -22,8 +22,9 @@ class WizzairDl(object):
         lm.debug("WizzairDl: {0}".format(message))
 
     def __updateApiVersion(self):
-        content = HttpManager.getMethod(CommonData.MAIN).text
-        api_version = re.findall(r'var apiUrl =\s*(.*?);', content, re.DOTALL | re.MULTILINE)[0].replace('"','')
+        content = HttpManager.getMethod(CommonData.API).text
+        jsonData = json.loads(content)
+        api_version = jsonData['apiUrl'] #re.findall(r'var apiUrl =\s*(.*?);', content, re.DOTALL | re.MULTILINE)[0].replace('"','')
         CommonData.Search = CommonData.Search.format(api_version)
         self.log("Search api: {}".format(CommonData.Search))
         return api_version

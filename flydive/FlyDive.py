@@ -34,7 +34,7 @@ class FlyDive():
         # Register all FlyDive plugins
         config = self.flydiveScheduler.getScheduleConfiguration()
 
-        # self.flydivePluginManager.start(flightTree, connectionList, config)
+        self.flydivePluginManager.start(flightTree, connectionList, config)
         scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config)
         self.flydiveScheduler.dumpToFile("scheduled.txt", scheduledFlights)
 
