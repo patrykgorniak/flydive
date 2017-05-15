@@ -1,7 +1,7 @@
 import json
-from RyanairUrls import CommonData
+from ryanair.RyanairUrls import CommonData
 
-import HttpManager as HttpMgr
+import common.HttpManager as HttpMgr
 
 class RyanairDl():
 

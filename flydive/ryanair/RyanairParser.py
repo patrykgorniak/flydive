@@ -1,3 +1,6 @@
+from common import tools
+from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
+
 class RyanairParser():
 
     """Docstring for RyanairParser. """
@@ -21,11 +24,11 @@ class RyanairParser():
         """
         airportList = []
         for IATA, details in JSONAirports.items():
-            lat = (details['latitude'][:-1])[4:]
+            lat, long = tools.dms_to_dd_conv(details['latitude'], details['longitude'])
             airport = Airport(iata=IATA,
                               name=details['name'],
-                              latitude=details['latitude'][:-1],
-                              longitude=details['longitude']
+                              latitude=lat,
+                              longitude=long
                               )
             airportList.append(airport)
-
+        return airportList

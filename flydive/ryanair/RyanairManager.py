@@ -1,35 +1,19 @@
-from common.FLPlugin import FLPlugin
+from FLEngineCreator import FLEngineCreator
 from ryanair.RyanairDl import RyanairDl
+from ryanair.RyanairParser import RyanairParser
+from ryanair import RyanairUrls as RyanairData
+from common.SessionManager import SessionManager
 
-class RyanairManager(FLPlugin):
-
-    """Docstring for RyanairManager. """
-
-    def __init__(self):
-        FLPlugin.__init__(self)
-        self.ryanairdl = RyanairDl()
-
-    def run(self, flightTree, connectionList, config):
-        """TODO: Docstring for run.
-
-        :flightTree: TODO
-        :connectionList: TODO
-        :config: TODO
-        :returns: TODO
-
-        """
-        pass
+class RyanairPlugin(FLEngineCreator):
+    def __init__(self, _db, _cfg, asyncDlMgr = None):
+        FLEngineCreator.__init__(self, _cfg, RyanairParser(), RyanairDl(), RyanairData, _db,
+                                 SessionManager(RyanairData.airline_name), asyncDlMgr)
 
     def initAirports(self):
-        """TODO: Docstring for initAirports.
-        :returns: TODO
-
-        """
-        self.ryanairdl.getAirports()
+        FLEngineCreator.initAirports(self)
 
     def initConnections(self):
-        """TODO: Docstring for initConnections.
-        :returns: TODO
+        FLEngineCreator.initConnections(self)
 
-        """
-        pass
+    def run(self, flightTree, connectionList, config):
+        FLEngineCreator.run(self, flightTree, connectionList, config)

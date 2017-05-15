@@ -48,6 +48,25 @@ def dumpConnectionsToGraph(connectionsList, excluded_cities):
     # file.close()
     return graph
 
+def dms_to_dd_conv(dms_lat, dms_long):
+     lat_symbol = dms_lat[-1]
+     lat_sec = int(dms_lat[-3:-1])
+     lat_min = int(dms_lat[-5:-3])
+     lat_hour = int(dms_lat[0:-5])
+     conv_lat = lat_hour + lat_min/60 + lat_sec/3600
+
+     long_symbol = dms_long[-1]
+     long_sec = int(dms_long[-3:-1])
+     long_min = int(dms_long[-5:-3])
+     long_hour = int(dms_long[0:-5])
+
+     conf_lat = lat_hour + lat_min/60 + lat_sec/3600
+     conv_long = long_hour + long_min/60 + long_sec/3600
+
+     dd_lat = conv_lat if lat_symbol=='N' else -conv_lat
+     dd_long = conv_long if long_symbol=='E' else -conv_long
+     return dd_lat, dd_long
+
 class FLJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, FlightDetails):
@@ -63,4 +82,3 @@ class FLJsonEncoder(json.JSONEncoder):
             return str(obj)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
-
