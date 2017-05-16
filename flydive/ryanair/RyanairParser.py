@@ -1,5 +1,6 @@
 from common import tools
 from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
+from ryanair import RyanairUrls as RyanairData
 
 class RyanairParser():
 
@@ -32,3 +33,19 @@ class RyanairParser():
                               )
             airportList.append(airport)
         return airportList
+
+    def extractJSONConnectionToList(self, connections):
+        connectionList = []
+        DS = connections['iataCode']
+        for route in connections['routes']:
+            route_split = route.split(':')
+            if route_split[0]=='airport':
+                connection = Connections(src_iata = DS,
+                                         dst_iata = route_split[1],
+                                         carrierCode = RyanairData.carrierCode
+                                         )
+                connectionList.append(connection)
+        return connectionList
+
+
+

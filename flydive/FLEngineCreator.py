@@ -46,7 +46,7 @@ class FLEngineCreator(FLPlugin):
         self.airportsReady = True
 
     def initConnections(self):
-        assert self.airportsReady == True, "Airports were not initialized!"
+        # assert self.airportsReady == True, "Airports were not initialized!"
         self.__fetchAndAddConnections()
         self.connectionsReady = True
 
@@ -222,9 +222,9 @@ class FLEngineCreator(FLPlugin):
         self.log("Fetch and add airports")
         airports = self.parser.extractJSONAirportsToList(self.dlMgr.getAirports())
         for airport in airports:
-            if not self.db.exists(airport):
-                airport = self.geo_name.getGeoData(airport)
-                self.db.addAirport(airport)
+            # if not self.db.exists(airport):
+            airport = self.geo_name.getGeoData(airport)
+            self.db.addAirport(airport)
 
     def __fetchAndAddConnections(self):
         """TODO: Docstring for getConnections.

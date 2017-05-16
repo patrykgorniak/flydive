@@ -67,11 +67,16 @@ class DatabaseManager(object):
         if not isinstance(airport, Airport):
             raise TypeError('airport is not type of Airport.')
 
-        if not self.__exists(airport, { 'iata': airport.iata }):
+        airport_exist = self.__exists(airport, { 'iata': airport.iata })
+        if not airport_exist:
             self.log("Added airport: IATA - {0}".format(airport.iata))
             self.__addAndCommit(airport)
         else:
-            self.log("Airport {0} already exists in DB".format(airport.iata))
+            self.log("Airport {0} already exists in DB. Updateing".format(airport.iata))
+            if not airport_exist.latitude and not airport_exist.longitude:
+                airport_exist.latitude = airport.latitude
+                airport_exist.longitude = airport.longitude
+                self.session.commit()
 
     def addConnection(self, connection):
         """Add connection to the database.

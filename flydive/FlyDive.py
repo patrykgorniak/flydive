@@ -29,8 +29,8 @@ class FlyDive():
     def main(self):
 
         self.registerPlugins()
-        self.flydivePluginManager.initAirports()
-        # self.flydivePluginManager.initConnections()
+        # self.flydivePluginManager.initAirports()
+        self.flydivePluginManager.initConnections()
 
         # newsletter_CfgList = self.newsletterMgr.get()
         # self.flydiveScheduler.dumpToFile("News.txt", newsletter_CfgList)

@@ -16,3 +16,9 @@ class RyanairDl():
         airports_text = HttpMgr.getMethod(CommonData.AIRPORTS).text
         json_data = json.loads(airports_text)
         return json_data
+
+    def getConnections(self):
+        connections_text = HttpMgr.getMethod(CommonData.CONNECTIONS).text
+        json_data = json.loads(connections_text)
+        return json_data['airports']
+
