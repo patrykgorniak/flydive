@@ -30,27 +30,27 @@ class FlyDive():
 
         self.registerPlugins()
         # self.flydivePluginManager.initAirports()
-        self.flydivePluginManager.initConnections()
+        # self.flydivePluginManager.initConnections()
 
-        # newsletter_CfgList = self.newsletterMgr.get()
-        # self.flydiveScheduler.dumpToFile("News.txt", newsletter_CfgList)
+        newsletter_CfgList = self.newsletterMgr.get()
+        self.flydiveScheduler.dumpToFile("News.txt", newsletter_CfgList)
 
-        # flightTree, connectionList = self.flydiveScheduler.getConnectionsTree(list(newsletter_CfgList.keys()))
+        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree(list(newsletter_CfgList.keys()))
         # # Register all FlyDive plugins
-        # config = self.flydiveScheduler.getScheduleConfiguration()
+        config = self.flydiveScheduler.getScheduleConfiguration()
 
-        # self.flydivePluginManager.start(flightTree, connectionList, config)
-        # scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config)
-        # self.flydiveScheduler.dumpToFile("scheduled.txt", scheduledFlights)
+        self.flydivePluginManager.start(flightTree, connectionList, config)
+        scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config)
+        self.flydiveScheduler.dumpToFile("scheduled.txt", scheduledFlights)
 
-        # filteredFlights = self.flydiveScheduler.removeEmptyFlights(scheduledFlights)
-        # self.flydiveScheduler.dumpToFile("filtered.txt", filteredFlights)
+        filteredFlights = self.flydiveScheduler.removeEmptyFlights(scheduledFlights)
+        self.flydiveScheduler.dumpToFile("filtered.txt", filteredFlights)
 
-        # calculatedFlights = self.flydiveScheduler.calculateCosts(filteredFlights)
-        # self.flydiveScheduler.dumpToFile("calculated.txt", calculatedFlights)
+        calculatedFlights = self.flydiveScheduler.calculateCosts(filteredFlights)
+        self.flydiveScheduler.dumpToFile("calculated.txt", calculatedFlights)
 
-        # config = self.flydiveScheduler.getDefaultConfig()
+        config = self.flydiveScheduler.getDefaultConfig()
 
-        # filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, newsletter_CfgList)
-        # self.flydiveScheduler.dumpToFile("last_step.txt", filteredFlightPack)
+        filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, newsletter_CfgList)
+        self.flydiveScheduler.dumpToFile("last_step.txt", filteredFlightPack)
         return

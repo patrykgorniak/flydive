@@ -2,6 +2,22 @@ import json
 import datetime
 from common.DatabaseModel import *
 
+class TimeTable:
+    """docstring for TimeTable"""
+    src = ""
+    dst = ""
+    def __init__(self, src, dst, date):
+        self.src = src
+        self.dst = dst
+        self.date = date
+
+    def __str__(self):
+        """TODO: Docstring for __str__.
+        :returns: TODO
+
+        """
+        return "TimeTable: from: {0} to: {1} date: {2}".format(self.src, self.dst, self.date)
+
 def printJSON(JSONObject):
     """TODO: Docstring for printJSON.
 

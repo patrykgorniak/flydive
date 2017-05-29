@@ -19,7 +19,7 @@ class DownloadIface():
 
         """
         pass
-    
+
 
     def getTimeTable(self, details):
         """TODO: Docstring for getTimeTable.
@@ -42,5 +42,7 @@ class DownloadIface():
         :returns: TODO
 
         """
-        pass    
+        pass
 
+    def prepareUrl(self, flight):
+        pass

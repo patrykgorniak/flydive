@@ -6,8 +6,9 @@ from common.SessionManager import SessionManager
 
 class RyanairPlugin(FLEngineCreator):
     def __init__(self, _db, _cfg, asyncDlMgr = None):
+        self.use_post = False
         FLEngineCreator.__init__(self, _cfg, RyanairParser(), RyanairDl(), RyanairData, _db,
-                                 SessionManager(RyanairData.airline_name), asyncDlMgr)
+                                 SessionManager(RyanairData.airline_name), self.use_post, asyncDlMgr)
 
     def initAirports(self):
         FLEngineCreator.initAirports(self)

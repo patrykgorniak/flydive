@@ -23,7 +23,7 @@ class FLEngineCreator(FLPlugin):
 
     """Docstring for FLEngineCreator. """
 
-    def __init__(self, cfg, parser, downloader, common, dbManager, sessionManager, asyncDlMgr = None):
+    def __init__(self, cfg, parser, downloader, common, dbManager, sessionManager, use_post_for_async, asyncDlMgr = None):
         FLPlugin.__init__(self)
         self.carrierCode = common.carrierCode
         self.airline_name = common.airline_name
@@ -35,6 +35,7 @@ class FLEngineCreator(FLPlugin):
         self.db = dbManager
         self.cfg = cfg
         self.asyncDlMgr = asyncDlMgr
+        self.use_post = use_post_for_async
 
         self.__readConfigData()
         self.currentDate = datetime.datetime.now()
@@ -46,13 +47,13 @@ class FLEngineCreator(FLPlugin):
         self.airportsReady = True
 
     def initConnections(self):
-        # assert self.airportsReady == True, "Airports were not initialized!"
+        assert self.airportsReady == True, "Airports were not initialized!"
         self.__fetchAndAddConnections()
         self.connectionsReady = True
 
     def run(self, paths, connectionList, config):
-        assert self.airportsReady == True, "Airports were not initialized!"
-        assert self.connectionsReady == True, "Connections were not initialized!"
+        # assert self.airportsReady == True, "Airports were not initialized!"
+        # assert self.connectionsReady == True, "Connections were not initialized!"
         assert config['date_from'] != -1 and config['date_to'] != -1, "Wrong config!"
 
         if not self.flight_detail_bypass and self.asyncMode and self.asyncDlMgr is not None:
@@ -74,6 +75,8 @@ class FLEngineCreator(FLPlugin):
             self.session.close()
 
         oneWayIdxList = self.__getOneWayConnectionIndexList(self.connections);
+        self.log("Connections: {}".format(len(self.connections)))
+        self.log("OneWayIdx: {}".format(len(oneWayIdxList)))
 
         assert (len(oneWayIdxList)*2) == len(self.connections)
 
@@ -89,8 +92,8 @@ class FLEngineCreator(FLPlugin):
                     connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
                     if(len(connectionsLeftList)):
                         self.session.save(connectionsLeftList)
-                    print("Unexpected error:", sys.exc_info()[0])
-                    raise
+                print("Unexpected error:", sys.exc_info()[0])
+                raise
 
         if not self.flight_detail_bypass and self.asyncMode:
             self.receiver.join()
@@ -124,8 +127,12 @@ class FLEngineCreator(FLPlugin):
         return self.parser.extractJSONFlightDetails(flightDetailsJSON)
 
     def __scheduleFlightDetails(self, flight):
-        params = self.dlMgr.packParamsToJSON(flight)
-        self.asyncDlMgr.schedulePostMethod(self.common.CommonData.Search, params, self.return_q)
+        if self.use_post:
+            params = self.dlMgr.packParamsToJSON(flight)
+            self.asyncDlMgr.schedulePostMethod(self.common.CommonData.Search, params, self.return_q)
+        else:
+            url = self.dlMgr.prepareUrl(flight)
+            self.asyncDlMgr.scheduleGetMethod(url, self.return_q)
 
     def __getTimeTable(self, date, connection):
         """ Gets monthly time table for connections and date
@@ -143,7 +150,7 @@ class FLEngineCreator(FLPlugin):
                    }
 
         timeTableJSON = self.dlMgr.getTimeTable(details)
-        return self.parser.extractJSONTimeTable(timeTableJSON)
+        return self.parser.extractJSONTimeTable(timeTableJSON, details)
 
     def __getOneWayConnectionIndexList(self, connectionList):
         """ Extracts one way connections from list of connections.
@@ -160,6 +167,8 @@ class FLEngineCreator(FLPlugin):
 
         for idx, c in enumerate(connectionList):
             c_return = Connections(src_iata=c.dst_iata, dst_iata=c.src_iata)
+            if not c_return in connectionList:
+                continue
             if not c or not c_return in tmplist:
                 oneWayIndexes.add(idx)
                 tmplist.append(c)
@@ -181,7 +190,10 @@ class FLEngineCreator(FLPlugin):
 
     def __asyncReceiver(self):
         while True:
-            flightDetailsJSON = self.return_q.get()
+            ret = self.return_q.get()
+            flightDetailsJSON = ret['data']
+            url = ret['url']
+            # self.log(url)
             list = self.parser.extractJSONFlightDetails(flightDetailsJSON)
             self.__handleFlightDetails(list)
             self.return_q.task_done()
@@ -192,13 +204,16 @@ class FLEngineCreator(FLPlugin):
                 return None
 
     def __handleFlightDetails(self, flightDetalsList):
+        connection = None
+
         for item in flightDetalsList:
             connection = [x for x in self.connections if x==item][0]  #TODO: should be changed, maybe to HASH MAP
             item.id_connections = connection.id
             self.db.addFlightDetails(item)
+            connection.updated =  datetime.datetime.now().date()
 
-        connection.updated =  datetime.datetime.now().date()
-        self.db.updateConnection(connection)
+        if isinstance(connection, Connections):
+            self.db.updateConnection(connection)
 
     def __readConfigData(self):
         self.month_delta = int(self.cfg['FLIGHT_SEARCH']['month_delta'])
@@ -211,7 +226,7 @@ class FLEngineCreator(FLPlugin):
         self.excluded_cities = json.loads(self.cfg['FLIGHT_SEARCH']['excluded_cities'])
 
     def log(self, message):
-        lm.debug("WizzairPlugin: {0}".format(message))
+        lm.debug("{}Plugin: {}".format(self.airline_name, message))
 
     def __initAirline(self):
         self.log("Add airline {0}".format(self.carrierCode))

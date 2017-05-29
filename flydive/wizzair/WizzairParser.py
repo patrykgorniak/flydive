@@ -1,6 +1,7 @@
 from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
 from datetime import datetime
 from wizzair import commonUrls as WizzData
+from common.tools import TimeTable
 from common import LogManager as lm
 
 class WizzairParser(object):
@@ -95,7 +96,7 @@ class WizzairParser(object):
 
         return airportList
 
-    def extractJSONTimeTable(self, JSONTimeTable):
+    def extractJSONTimeTable(self, JSONTimeTable, flightDetails):
         """TODO: Docstring for function.
 
         :JSONTimeTable: TODO
@@ -106,7 +107,7 @@ class WizzairParser(object):
         for flight in JSONTimeTable:
             if flight['Flights']:
                 timeTable = \
-                WizzData.TimeTable(flight['DepartureStationCode'],flight['ArrivalStationCode'],datetime.strptime(flight['CurrentDate'],"%Y-%m-%d"))
+                TimeTable(flight['DepartureStationCode'],flight['ArrivalStationCode'],datetime.strptime(flight['CurrentDate'],"%Y-%m-%d"))
                 timeTableList.append(timeTable)
 
         return timeTableList

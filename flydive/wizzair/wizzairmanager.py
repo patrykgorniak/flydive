@@ -8,8 +8,9 @@ from wizzair import commonUrls as WizzData
 
 class WizzairPlugin(FLEngineCreator):
     def __init__(self, _db, _cfg, asyncDlMgr = None):
+        self.use_post = True
         FLEngineCreator.__init__(self, _cfg, WizzairParser(), WizzairDl(), WizzData, _db,
-                                 SessionManager(WizzData.airline_name), asyncDlMgr)
+                                 SessionManager(WizzData.airline_name), self.use_post, asyncDlMgr)
 
     def initAirports(self):
         FLEngineCreator.initAirports(self)

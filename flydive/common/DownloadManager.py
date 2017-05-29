@@ -37,7 +37,7 @@ class DownloadThread(Thread):
                 httpContent = HttpManager.getMethod(task['url'], proxy).text
             else:
                 httpContent = HttpManager.postMethod(task['url'], task['params'], proxy).text
-            ret_q.put(json.loads(httpContent))
+            ret_q.put({'data':json.loads(httpContent), 'url': task['url'] } )
             q.task_done()
 
 

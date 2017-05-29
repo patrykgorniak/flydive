@@ -1,6 +1,6 @@
 from common import HttpManager
 from wizzair.commonUrls import CommonData
-from wizzair.commonUrls import TimeTable
+from common.tools import TimeTable
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
 import re
