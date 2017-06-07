@@ -86,10 +86,14 @@ def dms_to_dd_conv(dms_lat, dms_long):
 class FLJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, FlightDetails):
-            return obj.to_dict()
+            data = obj.to_dict()
+            return data
 
         if isinstance(obj, datetime.datetime):
             return str(obj)
+
+        if isinstance(obj, Connections):
+            return obj.carrierCode
 
         if isinstance(obj, datetime.date):
             return str(obj)

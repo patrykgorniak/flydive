@@ -80,7 +80,6 @@ class FlightScheduler():
             #             if type(flightsList) is list:
             #                 for flight in flightsList:
             #                     self.log(flight)
-        self.dumpToFile("flights.txt", scheduledFlightSuite)
 
         return scheduledFlightSuite
 
@@ -113,17 +112,36 @@ class FlightScheduler():
 
         return paths, connectionList
 
-    def getScheduleConfiguration(self):
+    def getConfigurationDates(self, newsletterData):
+        end_date = datetime.date.min
+        start_date = datetime.date.max
+
+        for key, value in newsletterData.items():
+            for config in value['configs']:
+                if config['start'] > datetime.date.today() and config['start'] < start_date:
+                    start_date = config['start']
+
+                if config['end'] > end_date:
+                    end_date = config['end']
+        start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
+        end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
+        return (start_date, end_date)
+
+    def getScheduleConfiguration(self, newsletterData):
         """TODO: Docstring for getScheduleConfiguration.
         :returns: TODO
 
         """
-        config = {  }
-        month_delta = int(self.cfg['FLIGHT_SEARCH']['month_delta'])
-        delay_data = datetime.timedelta(days=7)
-        date_from = datetime.datetime.now() + delay_data;
-        date_to = date_from + monthdelta(month_delta)
+        use_newsletterDates = True
+        if use_newsletterDates:
+            date_from, date_to = self.getConfigurationDates(newsletterData)
+        else:
+            month_delta = int(self.cfg['FLIGHT_SEARCH']['month_delta'])
+            delay_data = datetime.timedelta(days=7)
+            date_from = datetime.datetime.now() + delay_data;
+            date_to = date_from + monthdelta(month_delta)
 
+        config = {  }
         config['date_from'] = date_from
         config['date_to'] = date_to
 

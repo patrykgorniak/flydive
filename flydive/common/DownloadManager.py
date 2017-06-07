@@ -29,17 +29,31 @@ class DownloadThread(Thread):
         lm.debug("Created {}".format(i))
         while True:
             task = q.get()
-            proxy = self.proxyList[random.randrange(0,len(self.proxyList))]
-            lm.debug("Worker: {} Method {} PROXY: {}".format(i, task['M'], proxy))
             method = task['M']
             ret_q = task['return']
-            if method == 0:
-                httpContent = HttpManager.getMethod(task['url'], proxy).text
-            else:
-                httpContent = HttpManager.postMethod(task['url'], task['params'], proxy).text
-            ret_q.put({'data':json.loads(httpContent), 'url': task['url'] } )
             q.task_done()
 
+            if method is None:
+                lm.debug("Method NONE.")
+                while not q.empty():
+                    lm.debug("Queue is not empty")
+                    sleep(1)
+                lm.debug("Queue is empty")
+                ret_q.put( {'data':None} )
+            else:
+                while True:
+                    proxy = self.proxyList[random.randrange(0,len(self.proxyList))]
+                    lm.debug("Worker: {} Method {} PROXY: {}".format(i, task['M'], proxy))
+                    if method == 0:
+                        httpContent = HttpManager.getMethod(task['url'], proxy)
+                        if httpContent is not None:
+                            ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
+                            break
+                    else:
+                        httpContent = HttpManager.postMethod(task['url'], task['params'], proxy)
+                        if httpContent is not None:
+                            ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
+                            break
 
     def __createWorkers(self, num_workers):
         lm.debug("Creating {}".format(num_workers))
@@ -61,6 +75,11 @@ class AsyncDownloadManager():
 
     def schedulePostMethod(self, url, params, return_fifo):
         task = { "M":1, "url": url, "params": params, "return": return_fifo }
+        self.q.put(task)
+
+    def finished(self, return_fifo):
+        lm.debug("Send finished")
+        task = { "M": None, "return": return_fifo }
         self.q.put(task)
 
 def main():

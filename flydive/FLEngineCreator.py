@@ -7,7 +7,7 @@ import collections
 import sys
 
 from common.DatabaseManager import DatabaseManager
-from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
+from common.DatabaseModel import Airport, Connections, Airline, FlightDetails, Statistics
 from common.ConfigurationManager import CfgMgr
 from common.GeoNameProvider import GeoNameProvider
 from common import LogManager as lm
@@ -40,7 +40,9 @@ class FLEngineCreator(FLPlugin):
         self.__readConfigData()
         self.currentDate = datetime.datetime.now()
 
+        self.statistics = Statistics()
         self.__initAirline()
+
 
     def initAirports(self):
         self.__fetchAndAddAirports()
@@ -92,11 +94,17 @@ class FLEngineCreator(FLPlugin):
                     connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
                     if(len(connectionsLeftList)):
                         self.session.save(connectionsLeftList)
+
                 print("Unexpected error:", sys.exc_info()[0])
+                lm.exception()
                 raise
+
+        self.asyncDlMgr.finished(self.return_q)
+        self.return_q.join()
 
         if not self.flight_detail_bypass and self.asyncMode:
             self.receiver.join()
+
         self.log("Total time: {}".format(datetime.datetime.now() - self.currentDate))
 
     def __getFlightDetails(self, date_from, date_to, oneWayIdxList):
@@ -192,16 +200,20 @@ class FLEngineCreator(FLPlugin):
         while True:
             ret = self.return_q.get()
             flightDetailsJSON = ret['data']
+            if flightDetailsJSON is None:
+                self.return_q.task_done()
+                break
+
             url = ret['url']
             # self.log(url)
             list = self.parser.extractJSONFlightDetails(flightDetailsJSON)
             self.__handleFlightDetails(list)
             self.return_q.task_done()
 
-            if self.return_q.empty():
-                sleep(15)
-            if self.return_q.empty():
-                return None
+#             if self.return_q.empty():
+#                 sleep(30)
+#             if self.return_q.empty():
+#                 return None
 
     def __handleFlightDetails(self, flightDetalsList):
         connection = None
@@ -232,14 +244,24 @@ class FLEngineCreator(FLPlugin):
         self.log("Add airline {0}".format(self.carrierCode))
         airline = Airline(carrierCode=self.carrierCode, airlineName=self.airline_name)
         self.db.addAirline(airline)
+        self.statistics.airline_code = self.carrierCode
 
     def __fetchAndAddAirports(self):
         self.log("Fetch and add airports")
         airports = self.parser.extractJSONAirportsToList(self.dlMgr.getAirports())
+        statistics = self.db.getStatistics(self.carrierCode)
+        
+        if statistics:
+            statistics.airportCount == len(airports)
+            self.log("Statistics: skip adding airports.")
+            return
+
         for airport in airports:
             # if not self.db.exists(airport):
             airport = self.geo_name.getGeoData(airport)
             self.db.addAirport(airport)
+
+        self.statistics.airportCount = len(airports)
 
     def __fetchAndAddConnections(self):
         """TODO: Docstring for getConnections.
@@ -250,15 +272,21 @@ class FLEngineCreator(FLPlugin):
         addedToDb = False
         # testFilter = self.__generateConnections()
 
+        connectionList = []
         for connectionsFromAirport in self.dlMgr.getConnections():
-            if self.__unpackAndAddToDb(connectionsFromAirport):
-                addedToDb = True
-        return addedToDb
+            connectionList.extend(self.parser.extractJSONConnectionToList(connectionsFromAirport))
 
-    def __unpackAndAddToDb(self, connection, filter_by = {}):
-        addedToDb = False
-        connectionList = self.parser.extractJSONConnectionToList(connection)
+        statistics = self.db.getStatistics(self.carrierCode)
+        if statistics:
+            statistics.connectionCount == len(connectionList)
+            self.log("Statistics: skip adding connections.")
+            return False
 
+        self.__addConnections(connectionList)
+        self.statistics.connectionCount = len(connectionList)
+        self.db.addStatistics(self.statistics)
+
+    def __addConnections(self, connectionList, filter_by = {}):
         for c in connectionList:
             if self.db.addConnection(c):
                 addedToDb = True

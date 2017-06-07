@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from sqlalchemy_utils import database_exists
-from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base
+from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base, Statistics
 from datetime import datetime
 from common import LogManager as lm
 
@@ -87,7 +87,8 @@ class DatabaseManager(object):
         if not isinstance(connection, Connections):
             raise TypeError('connection is not object of Connections.')
 
-        inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata })
+        inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata,
+                                          'carrierCode': connection.carrierCode })
 
         if not inDb:
             self.log("Add connection from {0} to {1}".format(connection.src_iata, connection.dst_iata))
@@ -245,6 +246,8 @@ class DatabaseManager(object):
             filter_by = { 'iata': entry.iata }
         elif isinstance(entry, Connections):
             filter_by = { 'src_iata': entry.src_iata, 'dst_iata': entry.dst_iata, 'carrierCode': entry.carrierCode }
+        elif isinstance(entry, Statistics):
+            filter_by = {'airline_code': entry.airline_code}
         else:
             raise TypeError('error')
 
@@ -264,11 +267,29 @@ class DatabaseManager(object):
         data = self.session.query(type(entry)).filter_by(**filtered_by).first()
         return data
 
+    def getStatistics(self, IATA):
+        data = self.session.query(Statistics).filter(Statistics.airline_code==IATA).first()
+        return data
+
+    def addStatistics(self, statistics):
+        if not isinstance(statistics, Statistics):
+            raise TypeError("not statistics object")
+
+        data = self.exists(statistics)
+        if data:
+            data.airportCount = statistics.airportCount
+            data.connectionCount = statistics.connectionCount
+        else:
+            self.session.add(statistics)
+        self.session.commit()
+
 def main():
-    dbMgr = DatabaseManager('flydive', 'mysql')
+    # dbMgr = DatabaseManager('flydive', 'mysql')
+    dbMgr = DatabaseManager('flydive', 'sqlite')
     con = Connections(src_iata='WRO', dst_iata='EIN')
     import datetime
-    print(dbMgr.queryFlightDetails(con, datetime.datetime.now()))
+    res = dbMgr.queryFlightDetails(con, True, datetime.datetime(2017, 6, 20), datetime.datetime(2017, 6, 25))
+    print(res[0].connection.carrierCode)
     # for i in getOrderedConnections():
     #     print(i)
 

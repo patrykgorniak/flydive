@@ -23,6 +23,16 @@ def debug(log):
     if CfgMgr().getConfig()['LOGGER']['debug'] == 'on':
         logHandler.debug(log)
 
+def exception():
+    """TODO: Docstring for getLogger.
+
+    :module: TODO
+    :returns: TODO
+
+    """
+    if CfgMgr().getConfig()['LOGGER']['debug'] == 'on':
+        logHandler.exception("Got exception!")
+
 def enabled():
      return CfgMgr().getConfig()['LOGGER']['debug'] == 'on'
 

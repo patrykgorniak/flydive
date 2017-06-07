@@ -131,8 +131,8 @@ class FLSearchEngine():
         """
         departFlight = {}
         arrivalFlight = {}
-        max_change_time = int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
-        flex_time = int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
+        max_change_time = config['max_change_time'] #int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
+        flex_time = config['flex_time']             #int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
 
         start_date = datetime.datetime.combine(config['start'], config['time_start'])
         back_date = datetime.datetime.combine(config['end'], config['time_end'])
@@ -141,7 +141,7 @@ class FLSearchEngine():
            tmp = [x for x in flightList if (
                x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
                x['departure_DateTime'] >= start_date and
-               x['departure_DateTime'] <= start_date + datetime.timedelta(hours=flex_time)
+               x['departure_DateTime'] <= start_date + datetime.timedelta(days=flex_time)
            ) ]
 
            if len(tmp) > 0:
@@ -150,7 +150,7 @@ class FLSearchEngine():
         for flightName, flightList  in fromFlightList.items():
            tmp = [x for x in flightList if (
                x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-               x['arrival_DateTime'] >= back_date - datetime.timedelta(hours=flex_time) and
+               x['arrival_DateTime'] >= back_date - datetime.timedelta(days=flex_time) and
                x['arrival_DateTime'] <= back_date
            ) ]
 
@@ -168,8 +168,8 @@ class FLSearchEngine():
         :returns: TODO
 
         """
-        max_change_time = int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
-        flex_time = int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
+        max_change_time = config['max_change_time'] #int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
+        flex_time = config['flex_time']             #int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
 
         departFlight = {}
         arrivalFlight = {}
@@ -186,7 +186,8 @@ class FLSearchEngine():
             for (toFlightName, flightList) in toFlightList.items():
                 toFlights= [x for x in flightList if (
                     x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-                    x['departure_DateTime'] >= start_date and x['departure_DateTime'] <= start_date + datetime.timedelta(hours = flex_time)
+                    x['departure_DateTime'] >= start_date and x['departure_DateTime'] <= start_date +
+                    datetime.timedelta(days = flex_time)
                 )]
 
                 if len(toFlights) > 0:
@@ -195,7 +196,7 @@ class FLSearchEngine():
             for (fromFlightName, flightList) in fromFlightList.items():
                 fromFlights = [x for x in flightList if (
                     x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-                    x['arrival_DateTime'] >= back_date - datetime.timedelta(hours = flex_time) and x['arrival_DateTime'] <= back_date
+                    x['arrival_DateTime'] >= back_date - datetime.timedelta(days = flex_time) and x['arrival_DateTime'] <= back_date
                 )]
                 if len(fromFlights) > 0:
                     l2.append({fromFlightName: fromFlights})

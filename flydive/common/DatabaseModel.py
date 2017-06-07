@@ -93,7 +93,7 @@ class FlightDetails(Base, Helper):
     isAirportChanged = Column(Boolean, nullable=False)
     inDC = Column(Boolean, nullable=False)
     availableCount = Column(Integer, nullable=True)
-    connection = relationship("Connections", back_populates = "flightDetails")
+    connection = relationship("Connections", lazy='joined', back_populates = "flightDetails")
     # Helper.remove.extend(['src_iata', 'dst_iata'])
 
     #Helpers
@@ -143,7 +143,7 @@ class WatchFlight(Base, Helper):
                                                                               self.dst_iata)
 
 class WatchConfig(Base, Helper):
-    __tablename__ = 'watchFonfig'
+    __tablename__ = 'watchConfig'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     watchFlight_id = Column(Integer, ForeignKey('watchFlight.id'))
@@ -162,6 +162,16 @@ class WatchConfig(Base, Helper):
                     self.datetime_start,
                     self.datetime_end,
                     self.days )
+
+class Statistics(Base, Helper):
+    __tablename__ = 'statistics'
+    id = Column(Integer, primary_key = True)
+    airline_code = Column(String(10), ForeignKey('airline.carrierCode'))
+    airportCount = Column(Integer, nullable = False)
+    connectionCount = Column(Integer, nullable = False)
+
+    def __str__(self):
+        return "Statistics for {}: {} airports, {} connections".format(self.airline_code, airportCount, connectionCount)
 
 def main():
     engine = create_engine('sqlite:///flydive.sqlite')
