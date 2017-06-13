@@ -29,41 +29,43 @@ class FlyDive():
 
     def initArgParser(self):
         parser = argparse.ArgumentParser(description="Flydive - help")
-        parser.add_argument('-a', '--airports', action='store_true', help='Update airports')
-        parser.add_argument('-c','--connections', action='store_true', help='Update connections')
-        parser.add_argument('-d', '--fetchdetails', action='store_true', help='Init airports')
-        parser.add_argument('-s', '--schedule', action='store_true', help='Init airports')
+        parser.add_argument('-s', '--schedule', action='store_true', help='Run scheduler')
+        # parser.add_argument('-c','--connections', action='store_true', help='Update connections')
+        # parser.add_argument('-d', '--fetchdetails', action='store_true', help='Init airports')
+        # parser.add_argument('-s', '--schedule', action='store_true', help='Init airports')
         args = parser.parse_args()
         return args
 
     def main(self):
         self.registerPlugins()
-        # if self.args.airports:
-        self.flydivePluginManager.initAirports()
-        # if self.args.connections:
-        self.flydivePluginManager.initConnections()
+
+        if not self.args.schedule:
+            self.flydivePluginManager.initAirports()
+            self.flydivePluginManager.initConnections()
 
         # if self.args.fetchdetails:
         newsletter_CfgList = self.newsletterMgr.get()
-        # self.flydiveScheduler.dumpToFile("News.txt", newsletter_CfgList)
+        newsletter_CfgList2 = self.newsletterMgr.unpack()
+        self.flydiveScheduler.dumpToFile("Newsletter_CfgList2.txt", newsletter_CfgList2)
 
-        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree(list(newsletter_CfgList.keys()))
+        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree([ x for y in newsletter_CfgList2 for x in list(y.keys())]) #list(newsletter_CfgList.keys()))
         # # Register all FlyDive plugins
-        config = self.flydiveScheduler.getScheduleConfiguration(newsletter_CfgList)
+        config = self.flydiveScheduler.getScheduleConfiguration(newsletter_CfgList2)
 
-        self.flydivePluginManager.start(flightTree, connectionList, config)
+        if not self.args.schedule:
+            self.flydivePluginManager.start(flightTree, connectionList, config)
         
         scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config)
-        # self.flydiveScheduler.dumpToFile("scheduled.txt", scheduledFlights)
+        self.flydiveScheduler.dumpToFile("collectFlighDetails.txt", scheduledFlights)
+        scheduledFlights2 = self.flydiveScheduler.collectFlighDetails2(flightTree, config, newsletter_CfgList2)
+        self.flydiveScheduler.dumpToFile("collectFlighDetails2.txt", scheduledFlights2)
 
-        filteredFlights = self.flydiveScheduler.removeEmptyFlights(scheduledFlights)
-        # self.flydiveScheduler.dumpToFile("filtered.txt", filteredFlights)
+        # filteredFlights = self.flydiveScheduler.removeEmptyFlights(scheduledFlights2)
+        # self.flydiveScheduler.dumpToFile("removeEmptyFlights.txt", filteredFlights)
 
-        calculatedFlights = self.flydiveScheduler.calculateCosts(filteredFlights)
-        # self.flydiveScheduler.dumpToFile("calculated.txt", calculatedFlights)
+        calculatedFlights = self.flydiveScheduler.calculateCosts(scheduledFlights2)
+        self.flydiveScheduler.dumpToFile("calculateCosts.txt", calculatedFlights)
 
-        # config = self.flydiveScheduler.getDefaultConfig()
-
-        filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, newsletter_CfgList)
-        self.flydiveScheduler.dumpToFile("newsletter.txt", filteredFlightPack)
+        # filteredFlightPack = self.flydiveScheduler.filterFlightPack(calculatedFlights, newsletter_CfgList)
+        # self.flydiveScheduler.dumpToFile("newsletter.txt", filteredFlightPack)
         return

@@ -36,6 +36,56 @@ class FlightScheduler():
     def log(self, message):
         lm.debug("FlightScheduler: {0}".format(message))
 
+    def collectFlighDetails2(self, directionListSuite, config, newsletterSuite):
+
+        tripList = []
+        for trip in newsletterSuite:
+            connections = {}
+            flightDetails = {}
+            scheduledFlightSuite = {}
+            for dest, config in trip.items():
+                scheduledFlights = {}
+                toList = []
+                returnList = []
+                date_from = datetime.datetime.combine(config['start'], datetime.datetime.min.time())
+                date_to = datetime.datetime.combine(config['end'], datetime.datetime.min.time())
+                directionList = directionListSuite[dest]
+                for direction in directionList:
+                    airports = []
+                    back_airports = []
+                    # key = "{}-{}".format(direction[0], direction[-1])
+                    main_key = "-".join(direction)
+                    back_main_key = "-".join(direction[::-1])
+                    self.log(main_key)
+                    for i in range(len(direction) - 1):
+                        from_iata = direction[i]
+                        to_iata = direction[i+1]
+                        key = "{}-{}".format(from_iata, to_iata)
+                        back_key = "{}-{}".format(to_iata, from_iata)
+                        airports.append(key)
+                        back_airports.insert(0, back_key)
+                        if key not in connections:
+                            value = Connections(src_iata = from_iata, dst_iata = to_iata)
+                            back_value = Connections(src_iata = to_iata, dst_iata = from_iata)
+                            connections[key] = value
+                            connections[back_key] = back_value
+                            flightDetails[key] = self.db.queryFlightDetails(value, True, date_from, date_to)
+                            flightDetails[back_key] = self.db.queryFlightDetails(back_value, True, date_from, date_to)
+
+                    departTmp = self.flse.schedulePath(airports, flightDetails)
+                    if len(departTmp) > 0:
+                        scheduledFlights[main_key] = departTmp
+                        toList.append({main_key: scheduledFlights[main_key]})
+
+                    returnTmp = self.flse.schedulePath(back_airports, flightDetails)
+                    if len(returnTmp) > 0:
+                        scheduledFlights[back_main_key] = returnTmp
+                        returnList.append({back_main_key: scheduledFlights[back_main_key]})
+
+                scheduledFlightSuite[dest] = {"DEP": toList, "RET": returnList}
+            tripList.append(scheduledFlightSuite)
+        return tripList
+
     def collectFlighDetails(self, directionListSuite, config):
         date_from = config['date_from'] #datetime.datetime.now() + monthdelta(config['deltaTimeMonths_from'])
         date_to = config['date_to'] #date_from + monthdelta(config['deltaTimeMonths_to'])
@@ -67,19 +117,15 @@ class FlightScheduler():
                         flightDetails[key] = self.db.queryFlightDetails(value, True, date_from, date_to)
                         flightDetails[back_key] = self.db.queryFlightDetails(back_value, True, date_from, date_to)
 
-                scheduledFlights[main_key] = self.flse.schedulePath(airports, flightDetails)
-                scheduledFlights[back_main_key] = self.flse.schedulePath(back_airports, flightDetails)
-            # scheduledFlights['config'] = newsletter_CfgList[dest]
-            scheduledFlightSuite[dest] = scheduledFlights #{ main_key : scheduledFlights[main_key], back_main_key: scheduledFlights[back_main_key] }
+                departList = self.flse.schedulePath(airports, flightDetails)
+                if len(departList) > 0:
+                    scheduledFlights[main_key] = departList
 
-            # for directionName, directionList in scheduledFlights.items():
-            #     for direction in directionList:
-            #         self.log(direction)
-            #         for changeName, flightsList in direction.items():
-            #             self.log(changeName)
-            #             if type(flightsList) is list:
-            #                 for flight in flightsList:
-            #                     self.log(flight)
+                returnList = self.flse.schedulePath(back_airports, flightDetails)
+                if len(returnList) > 0:
+                    scheduledFlights[back_main_key] = returnList
+
+            scheduledFlightSuite[dest] = scheduledFlights
 
         return scheduledFlightSuite
 
@@ -116,8 +162,9 @@ class FlightScheduler():
         end_date = datetime.date.min
         start_date = datetime.date.max
 
-        for key, value in newsletterData.items():
-            for config in value['configs']:
+        for trip in newsletterData:
+            for key, config in trip.items():
+                # for config in value['config']:
                 if config['start'] > datetime.date.today() and config['start'] < start_date:
                     start_date = config['start']
 
@@ -154,22 +201,25 @@ class FlightScheduler():
         :returns: TODO
 
         """
-        if type(scheduledFlightSuite) is not dict:
+        if type(scheduledFlightSuite) is not list:
             raise TypeError
-        newScheduledFlightSuite = copy.deepcopy(scheduledFlightSuite)
+        # newScheduledFlightSuite = copy.deepcopy(scheduledFlightSuite)
 
-        for flightSuiteName, flightSuiteList in scheduledFlightSuite.items():
-            for flightName, flightList in flightSuiteList.items():
-                if len(flightList) == 0:
-                    del newScheduledFlightSuite[flightSuiteName][flightName]
-                # else:
-                #     for i, direction in enumerate(flightList):
-                #         for k, v in direction.items():
-                #             if type(v) is list and len(v) == 0:
-                #                 newScheduledFlightSuite[flightSuiteName][flightName].remove(i)
-                #                 continue
+        for trip in scheduledFlightSuite:
+            for flightSuiteName, flightSuiteList in trip.items():
+                for directionKey, directionList in flightSuiteList.items():
+                    directionList[:] = [ direction for direction in directionList if len(direction[ list(direction.keys())[0] ]) > 0 ]
+                        # for flightName, flightList in direction.items():
+                        #     if len(flightList) == 0:
+                        #         del scheduledFlightSuite[i][flightSuiteName][directionKey][j]
+                    # else:
+                    #     for i, direction in enumerate(flightList):
+                    #         for k, v in direction.items():
+                    #             if type(v) is list and len(v) == 0:
+                    #                 newScheduledFlightSuite[flightSuiteName][flightName].remove(i)
+                    #                 continue
 
-        return newScheduledFlightSuite
+        return scheduledFlightSuite
 
     def calculateCosts(self, scheduledFlightSuite):
         """TODO: Docstring for calculateCosts.
@@ -178,7 +228,7 @@ class FlightScheduler():
         :returns: TODO
 
         """
-        newScheduledFlightSuite = copy.deepcopy(scheduledFlightSuite)
+        # newScheduledFlightSuite = copy.deepcopy(scheduledFlightSuite)
         currencyCache = {
             self.currencyProvider.baseCurrencySymbol: 1,
             "BAM" : 0.46,
@@ -186,24 +236,34 @@ class FlightScheduler():
             "MKD" : 14.50
         }
 
-        for flightSuiteName, flightSuiteList in scheduledFlightSuite.items():
-            for flightName, flightList in flightSuiteList.items():
-                for i, direction in enumerate(flightList):
-                    # if self.__isDirectionConsistent(direction):
-                        calc = 0
-                        for k, v in direction.items():
-                            if type(v) is list:
-                                currencySymbol = v[0].currency
-                                if currencySymbol in currencyCache:
-                                    currencyRate = currencyCache[currencySymbol]
-                                else:
-                                    currencyRate = \
-                                    self.currencyProvider.getCurrencyExchangeRate(currencySymbol)[currencySymbol]
-                                    currencyCache[currencySymbol] = currencyRate
-                                calc += v[0].price/currencyRate
-                        newScheduledFlightSuite[flightSuiteName][flightName][i]['totalCost'] = round(calc, 2)
+        for trip in scheduledFlightSuite:
+            for flightSuiteName, flightSuiteList in trip.items():
+                for directionKey, directionList in flightSuiteList.items():
+                    for direction in directionList:
+                        for flightName, flightList in direction.items():
+                            for direction in flightList:
+                                    fastestCalc = 0
+                                    cheapestCalc = 0
+                                    cheapest_departDateTime = 0
+                                    cheapest_arrivalDateTime = 0
+                                    for k, v in direction.items():
+                                        if type(v) is list:
+                                            currencySymbol = v[0].currency
+                                            if currencySymbol in currencyCache:
+                                                currencyRate = currencyCache[currencySymbol]
+                                            else:
+                                                currencyRate = \
+                                                self.currencyProvider.getCurrencyExchangeRate(currencySymbol)[currencySymbol]
+                                                currencyCache[currencySymbol] = currencyRate
+                                            
+                                            fastestCalc += v[0].price/currencyRate
+                                            tmpList = [ elem.price for elem in v ]
+                                            idx = tmpList.index(min(tmpList))
+                                            cheapestCalc += v[idx].price/currencyRate
+                                    direction['fastestTotalCost'] = round(fastestCalc, 2)
+                                    direction['cheapestTotalCost'] = round(cheapestCalc, 2)
 
-        return newScheduledFlightSuite
+        return scheduledFlightSuite
 
     def __isDirectionConsistent(self, direction):
         """TODO: Docstring for __checkDirection.
@@ -275,6 +335,9 @@ class FlightScheduler():
             filteredFlightPack[flightSuiteName] = lst #{ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) }
 
         return filteredFlightPack
+
+    def findCheapFlights(self, flightDetails):
+        pass
 
 
     def filterFlights(self, direction, flightSuite, scheduleDetails = { 'mode': 0, 'start': datetime.date.today, 'end':
