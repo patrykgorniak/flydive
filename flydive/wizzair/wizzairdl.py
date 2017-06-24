@@ -48,7 +48,7 @@ class WizzairDl(object):
         if self.cfg['DEBUGGING']['state'] == 'online':
             self.log("Get from: " + url)
             httpContent = HttpManager.getMethod(url).text
-            self.writeToFile(filePath, httpContent)
+            # self.writeToFile(filePath, httpContent)
         else:
             self.log("Get from: " + filePath)
             with open(filePath, 'r') as f:
@@ -154,7 +154,7 @@ class WizzairDl(object):
         filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))
         if self.cfg['DEBUGGING']['state'] == 'online':
             httpContent = HttpManager.postMethod(CommonData.Search, params).text
-            self.writeToFile(filePath, httpContent)
+            # self.writeToFile(filePath, httpContent)
         else:
             filePath = os.path.join(self.base, '{0}_{1}_{2}.json'.format(flight.src, flight.dst, flight.date))
             self.log("Get from: " + filePath)
