@@ -12,7 +12,7 @@ class FlyDive():
     def __init__(self):
         self.args = self.initArgParser()
         self.cfg = CfgMgr().getConfig()
-        self.setupLogger(self.cfg['LOGGER'])
+        self.setupLogger(self.cfg['LOGGER'], self.args.debug)
 
         self.flydivePluginManager = FLPluginManager()
         self.flydiveScheduler = FlightScheduler()
@@ -26,14 +26,14 @@ class FlyDive():
         if self.cfg['PLUGINS']['ryanair']=='on':
             self.flydivePluginManager.registerPlugin(RyanairPlugin)
 
-    def setupLogger(self, cfg):
-        LogMgr.init(dirname=cfg['config_dir'], configFileName=cfg['config_name'])
+    def setupLogger(self, cfg, dump_files):
+        LogMgr.init(dump_files, dirname=cfg['config_dir'], configFileName=cfg['config_name'])
 
     def initArgParser(self):
         parser = argparse.ArgumentParser(description="Flydive - help")
         parser.add_argument('-s', '--schedule', action='store_true', help='Run scheduler')
         # parser.add_argument('-c','--connections', action='store_true', help='Update connections')
-        # parser.add_argument('-d', '--fetchdetails', action='store_true', help='Init airports')
+        parser.add_argument('-d', '--debug', action='store_true', help='dump files')
         # parser.add_argument('-s', '--schedule', action='store_true', help='Init airports')
         args = parser.parse_args()
         return args
@@ -51,16 +51,19 @@ class FlyDive():
         self.flydiveScheduler.dumpToFile("Newsletter_CfgList.txt", newsletter_CfgList)
 
         flightTree, connectionList = self.flydiveScheduler.getConnectionsTree([ x for y in newsletter_CfgList for x in list(y.keys())]) #list(newsletter_CfgList.keys()))
+        self.flydiveScheduler.dumpToFile("connectionsTree.txt", flightTree)
+
         # # Register all FlyDive plugins
         config = self.flydiveScheduler.getScheduleConfiguration(newsletter_CfgList)
 
         if not self.args.schedule:
             self.flydivePluginManager.start(flightTree, connectionList, config)
 
-        scheduledFlights = self.flydiveScheduler.collectFlighDetails2(flightTree, config, newsletter_CfgList)
+        scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config, newsletter_CfgList)
+        
         self.flydiveScheduler.dumpToFile("collectFlighDetails.txt", scheduledFlights)
 
-        filteredFlightPack = self.flydiveScheduler.filterFlightPack2(scheduledFlights, newsletter_CfgList)
+        filteredFlightPack = self.flydiveScheduler.filterFlightPack(scheduledFlights, newsletter_CfgList)
         self.flydiveScheduler.dumpToFile("filteredFlightPack.txt", filteredFlightPack)
 
         calculatedFlights = self.flydiveScheduler.calculateCosts(filteredFlightPack)

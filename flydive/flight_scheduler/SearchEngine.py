@@ -82,7 +82,7 @@ class FLSearchEngine():
         :returns: TODO
 
         """
-        self.log(airportList)
+        # self.log(airportList)
         scheduledFlights = []
 
         for start_flight in flightDetails[airportList[0]]:

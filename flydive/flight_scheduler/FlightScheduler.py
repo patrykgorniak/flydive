@@ -44,7 +44,7 @@ class FlightScheduler():
     def log(self, message):
         lm.debug("FlightScheduler: {0}".format(message))
 
-    def collectFlighDetails2(self, directionListSuite, config, newsletterSuite):
+    def collectFlighDetails(self, directionListSuite, config, newsletterSuite):
 
         tripList = []
         for trip in newsletterSuite:
@@ -94,48 +94,48 @@ class FlightScheduler():
             tripList.append(scheduledFlightSuite)
         return tripList
 
-    def collectFlighDetails(self, directionListSuite, config):
-        date_from = config['date_from'] #datetime.datetime.now() + monthdelta(config['deltaTimeMonths_from'])
-        date_to = config['date_to'] #date_from + monthdelta(config['deltaTimeMonths_to'])
+    # def collectFlighDetails(self, directionListSuite, config):
+    #     date_from = config['date_from'] #datetime.datetime.now() + monthdelta(config['deltaTimeMonths_from'])
+    #     date_to = config['date_to'] #date_from + monthdelta(config['deltaTimeMonths_to'])
 
-        connections = {}
-        flightDetails = {}
-        scheduledFlightSuite = {}
-        for dest, directionList in directionListSuite.items():
-            scheduledFlights = {}
-            for direction in directionList:
-                airports = []
-                back_airports = []
-                # key = "{}-{}".format(direction[0], direction[-1])
-                main_key = "-".join(direction)
-                back_main_key = "-".join(direction[::-1])
-                self.log(main_key)
-                for i in range(len(direction) - 1):
-                    from_iata = direction[i]
-                    to_iata = direction[i+1]
-                    key = "{}-{}".format(from_iata, to_iata)
-                    back_key = "{}-{}".format(to_iata, from_iata)
-                    airports.append(key)
-                    back_airports.append(back_key)
-                    if key not in connections:
-                        value = Connections(src_iata = from_iata, dst_iata = to_iata)
-                        back_value = Connections(src_iata = to_iata, dst_iata = from_iata)
-                        connections[key] = value
-                        connections[back_key] = back_value
-                        flightDetails[key] = self.db.queryFlightDetails(value, True, date_from, date_to)
-                        flightDetails[back_key] = self.db.queryFlightDetails(back_value, True, date_from, date_to)
+    #     connections = {}
+    #     flightDetails = {}
+    #     scheduledFlightSuite = {}
+    #     for dest, directionList in directionListSuite.items():
+    #         scheduledFlights = {}
+    #         for direction in directionList:
+    #             airports = []
+    #             back_airports = []
+    #             # key = "{}-{}".format(direction[0], direction[-1])
+    #             main_key = "-".join(direction)
+    #             back_main_key = "-".join(direction[::-1])
+    #             self.log(main_key)
+    #             for i in range(len(direction) - 1):
+    #                 from_iata = direction[i]
+    #                 to_iata = direction[i+1]
+    #                 key = "{}-{}".format(from_iata, to_iata)
+    #                 back_key = "{}-{}".format(to_iata, from_iata)
+    #                 airports.append(key)
+    #                 back_airports.append(back_key)
+    #                 if key not in connections:
+    #                     value = Connections(src_iata = from_iata, dst_iata = to_iata)
+    #                     back_value = Connections(src_iata = to_iata, dst_iata = from_iata)
+    #                     connections[key] = value
+    #                     connections[back_key] = back_value
+    #                     flightDetails[key] = self.db.queryFlightDetails(value, True, date_from, date_to)
+    #                     flightDetails[back_key] = self.db.queryFlightDetails(back_value, True, date_from, date_to)
 
-                departList = self.flse.schedulePath(airports, flightDetails)
-                if len(departList) > 0:
-                    scheduledFlights[main_key] = departList
+    #             departList = self.flse.schedulePath(airports, flightDetails)
+    #             if len(departList) > 0:
+    #                 scheduledFlights[main_key] = departList
 
-                returnList = self.flse.schedulePath(back_airports, flightDetails)
-                if len(returnList) > 0:
-                    scheduledFlights[back_main_key] = returnList
+    #             returnList = self.flse.schedulePath(back_airports, flightDetails)
+    #             if len(returnList) > 0:
+    #                 scheduledFlights[back_main_key] = returnList
 
-            scheduledFlightSuite[dest] = scheduledFlights
+    #         scheduledFlightSuite[dest] = scheduledFlights
 
-        return scheduledFlightSuite
+    #     return scheduledFlightSuite
 
     def getConnectionsTree(self, directionList):
         assert isinstance(directionList, list), "DirectionList is not List."
@@ -155,14 +155,14 @@ class FlightScheduler():
         #         paths[k] = BFS(graph, self.search_depth, src_iata, dst_iata)
         #         # paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
 
-        if lm.enabled():
-            with open(os.path.join(self.log_dir, "connectionsTree.txt"),'w') as f:
-                json.dump(paths, f, cls=tools.FLJsonEncoder, indent=4)
-            f.close()
+        # if lm.enabled():
+        #     with open(os.path.join(self.log_dir, "connectionsTree.txt"),'w') as f:
+        #         json.dump(paths, f, cls=tools.FLJsonEncoder, indent=4)
+        #     f.close()
 
-            with open(os.path.join(self.log_dir, "graph.txt"),'w') as f:
-                json.dump(graph, f, cls=tools.FLJsonEncoder, indent=4)
-            f.close()
+        #     with open(os.path.join(self.log_dir, "graph.txt"),'w') as f:
+        #         json.dump(graph, f, cls=tools.FLJsonEncoder, indent=4)
+        #     f.close()
 
         return paths, connectionList
 
@@ -387,12 +387,6 @@ class FlightScheduler():
         return True
 
     def dumpToFile(self, fileName, data):
-        """TODO: Docstring for dumpToFile.
-
-        :fileName: TODO
-        :returns: TODO
-
-        """
         if lm.dump_files():
             with open(os.path.join(self.log_dir, fileName),'w') as f:
                 json.dump(data, f, cls=tools.FLJsonEncoder, indent=4)
@@ -425,7 +419,7 @@ class FlightScheduler():
 
         return { 'default': defaultConfig[1] }
 
-    def filterFlightPack2(self, flightSuiteList, configList):
+    def filterFlightPack(self, flightSuiteList, configList):
 
         tripList = []
         for i, trip in enumerate(flightSuiteList):
@@ -445,31 +439,27 @@ class FlightScheduler():
 
         return tripList
 
-    def filterFlightPack(self, flightSuiteList, configList):
-        """TODO: Docstring for filterFlightPack.
+    # def filterFlightPack(self, flightSuiteList, configList):
+    #     """TODO: Docstring for filterFlightPack.
 
-        :flightSuiteList: TODO
-        :configList: TODO
-        :returns: TODO
+    #     :flightSuiteList: TODO
+    #     :configList: TODO
+    #     :returns: TODO
 
-        """
-        filteredFlightPack = {}
-        for flightSuiteName, flightSuite in flightSuiteList.items():
-            if flightSuiteName in configList:
-                configs = configList[flightSuiteName]
-            else:
-                configs = [configList['default']]
+    #     """
+    #     filteredFlightPack = {}
+    #     for flightSuiteName, flightSuite in flightSuiteList.items():
+    #         if flightSuiteName in configList:
+    #             configs = configList[flightSuiteName]
+    #         else:
+    #             configs = [configList['default']]
 
-            lst = []
-            for config in configs['configs']:
-                lst.append({ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) })
-            filteredFlightPack[flightSuiteName] = lst #{ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) }
+    #         lst = []
+    #         for config in configs['configs']:
+    #             lst.append({ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) })
+    #         filteredFlightPack[flightSuiteName] = lst #{ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) }
 
-        return filteredFlightPack
-
-    def findCheapFlights(self, flightDetails):
-        pass
-
+    #     return filteredFlightPack
 
     def filterFlights(self, direction, flightSuite, scheduleDetails = { 'mode': 0, 'start': datetime.date.today, 'end':
                                                             datetime.datetime.today(), 'days': 5 } ):
