@@ -27,11 +27,12 @@ class DownloadThread(Thread):
 
     def worker(self, i, q):
         lm.debug("Created {}".format(i))
+        limit = 10
         while True:
+            counter = 0
             task = q.get()
             method = task['M']
             ret_q = task['return']
-            q.task_done()
 
             if method is None:
                 lm.debug("Method NONE.")
@@ -42,6 +43,10 @@ class DownloadThread(Thread):
                 ret_q.put( {'data':None} )
             else:
                 while True:
+                    if counter == limit:
+                        lm.debug("No response from server.")
+                        break
+
                     proxy = self.proxyList[random.randrange(0,len(self.proxyList))]
                     lm.debug("Worker: {} Method {} PROXY: {}".format(i, task['M'], proxy))
                     if method == 0:
@@ -49,11 +54,18 @@ class DownloadThread(Thread):
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
+                        else:
+                            lm.debug("Request error for: {} {}".format(task['url'], proxy))
                     else:
                         httpContent = HttpManager.postMethod(task['url'], task['params'], proxy)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
+                        else:
+                            lm.debug("Request error for: {} {}".format(task['url'], proxy))
+                    counter = counter + 1
+
+            q.task_done()
 
     def __createWorkers(self, num_workers):
         lm.debug("Creating {}".format(num_workers))
