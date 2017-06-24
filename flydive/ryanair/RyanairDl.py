@@ -39,5 +39,5 @@ class RyanairDl():
 
     def prepareUrl(self, flight):
         url = RyanairData.CommonData.Search
-        url = url.format(flight.src, flight.dst, flight.date, flight.date)
+        url = url.format(flight.src, flight.dst, flight.date.date(), flight.date.date())
         return url

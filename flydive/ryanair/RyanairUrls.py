@@ -5,7 +5,7 @@ class CommonData():
     TimeTable = \
     "https://api.ryanair.com/farefinder/3/roundTripFares/{}/{}/cheapestPerDay?outboundMonthOfDate={}&market=pl-pl"
     Search = \
-    "https://desktopapps.ryanair.com/v3/pl-pl/availability?ADT=1&CHD=0&Origin={}&Destination={}&DateOut={}&DateIn={}&FlexDaysIn=6&FlexDaysOut=6&INF=0&RoundTrip=true&TEEN=0&exists=false"
+    "https://desktopapps.ryanair.com/v3/pl-pl/availability?ADT=1&CHD=0&Origin={}&Destination={}&DateOut={}&DateIn={}&FlexDaysIn=6&FlexDaysOut=6&INF=0&RoundTrip=true&TEEN=0&exists=false&ToUs=AGREED"
 
 carrierCode = 'FR'
 airline_name = 'RyanAir'
