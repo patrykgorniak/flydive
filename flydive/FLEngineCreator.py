@@ -99,8 +99,8 @@ class FLEngineCreator(FLPlugin):
                 lm.exception()
                 raise
 
-        self.asyncDlMgr.finished(self.return_q)
         self.return_q.join()
+        self.asyncDlMgr.finished(self.return_q)
 
         if not self.flight_detail_bypass and self.asyncMode:
             self.receiver.join()
@@ -108,13 +108,14 @@ class FLEngineCreator(FLPlugin):
         self.log("Total time: {}".format(datetime.datetime.now() - self.currentDate))
 
     def __getFlightDetails(self, date_from, date_to, oneWayIdxList):
+        
         for i, idx in enumerate(oneWayIdxList):
-            for delta in range(self.month_delta):
+            for delta in range(date_to.month - date_from.month + 1):
                 time = date_from + monthdelta(delta)
 
                 timeTableList = self.__getTimeTable(time, self.connections[idx]) #get timetable for given year-month
                 for flight in timeTableList:
-                    if flight.date > date_from and flight.date <= date_to: #datetime.datetime(2017,2,18):
+                    if flight.date >= date_from and flight.date <= date_to: #datetime.datetime(2017,2,18):
                         if self.asyncMode:
                             self.__scheduleFlightDetails(flight)
                         else:
@@ -201,6 +202,7 @@ class FLEngineCreator(FLPlugin):
             ret = self.return_q.get()
             flightDetailsJSON = ret['data']
             if flightDetailsJSON is None:
+                self.log("End of async receiver")
                 self.return_q.task_done()
                 break
 
