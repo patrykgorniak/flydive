@@ -29,14 +29,20 @@ class FLSearchEngine():
         # self.log("Flight list: {}".format(flightList))
         # self.log("Last flight: {}".format(lastFlight))
         scheduledFlights['departure_DateTime'] = previousFlight.departure_DateTime
+        flightTime = previousFlight.arrival_DateTime - previousFlight.departure_DateTime
 
         for flightChange in flightList:
             scheduledFlights[flightChange] = self.__findFlight(previousFlight, flightDetailList[flightChange], criteria)
+            if len(scheduledFlights[flightChange]) > 0:
+                flightTime = flightTime + scheduledFlights[flightChange][0].arrival_DateTime - scheduledFlights[flightChange][0].departure_DateTime
 
             if len(scheduledFlights[flightChange]) == 0: # No flights were found from flightChange, mark flight as invalid
-                scheduledFlights[flightChange] = self.__findFlight(previousFlight, flightDetailList[flightChange], {
-                    'time_change_min': 2, 'time_change_max': 72 })
+                scheduledFlights[flightChange] = self.__findFlight(previousFlight, flightDetailList[flightChange], {'time_change_min': 2, 'time_change_max': 72 })
                 scheduledFlights['s'] = 0
+
+                # calculate flight time
+                if len(scheduledFlights[flightChange]) > 0:
+                    flightTime = flightTime + scheduledFlights[flightChange][0].arrival_DateTime - scheduledFlights[flightChange][0].departure_DateTime
 
                 if len(scheduledFlights[flightChange]) > 0 :
                     previousFlight = scheduledFlights[flightChange][0]
@@ -47,6 +53,8 @@ class FLSearchEngine():
                 return None
 
         scheduledFlights['arrival_DateTime'] = scheduledFlights[lastFlight][0].arrival_DateTime
+
+        scheduledFlights['flightTime'] = round(flightTime.total_seconds()/(60*60), 2)
         return scheduledFlights
 
     def __findFlight(self, previousFlight, flightDetails, criteria):
@@ -129,35 +137,37 @@ class FLSearchEngine():
         :returns: TODO
 
         """
-        departFlight = {}
-        arrivalFlight = {}
+        departFlight = []
+        returnFlight = []
         max_change_time = config['max_change_time'] #int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
         flex_time = config['flex_time']             #int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
 
         start_date = datetime.datetime.combine(config['start'], config['time_start'])
         back_date = datetime.datetime.combine(config['end'], config['time_end'])
 
-        for flightName, flightList  in toFlightList.items():
-           tmp = [x for x in flightList if (
-               x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-               x['departure_DateTime'] >= start_date and
-               x['departure_DateTime'] <= start_date + datetime.timedelta(days=flex_time)
-           ) ]
+        for flightSuite in toFlightList:
+            for flightName, flightList  in flightSuite.items():
+               tmp = [x for x in flightList if (
+                   x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
+                   x['departure_DateTime'] >= start_date and
+                   x['departure_DateTime'] <= start_date + datetime.timedelta(days=flex_time)
+               ) ]
+    
+               if len(tmp) > 0:
+                   departFlight.append({flightName: tmp})
 
-           if len(tmp) > 0:
-               departFlight[flightName] = tmp
+        for flightSuite in fromFlightList:
+            for flightName, flightList  in flightSuite.items():
+               tmp = [x for x in flightList if (
+                   x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
+                   x['arrival_DateTime'] >= back_date - datetime.timedelta(days=flex_time) and
+                   x['arrival_DateTime'] <= back_date
+               ) ]
+    
+               if len(tmp) > 0:
+                   returnFlight.append({ flightName: tmp })
 
-        for flightName, flightList  in fromFlightList.items():
-           tmp = [x for x in flightList if (
-               x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-               x['arrival_DateTime'] >= back_date - datetime.timedelta(days=flex_time) and
-               x['arrival_DateTime'] <= back_date
-           ) ]
-
-           if len(tmp) > 0:
-               arrivalFlight[flightName] = tmp
-
-        return {'to': departFlight, 'from': arrivalFlight}
+        return {'DEP': departFlight, 'RET': returnFlight}
 
     def findWeekendFlights(self, toFlightList, fromFlightList, config, weekendList):
         """TODO: Docstring for findFlights.
@@ -171,9 +181,8 @@ class FLSearchEngine():
         max_change_time = config['max_change_time'] #int(self.global_cfg['FLIGHT_SEARCH']['max_flight_change_timeH'])
         flex_time = config['flex_time']             #int(self.global_cfg['FLIGHT_SEARCH']['flex_time'])
 
-        departFlight = {}
-        arrivalFlight = {}
-
+        departFlight = []
+        arrivalFlight = []
 
         list = []
         for weekend in weekendList:
@@ -183,27 +192,33 @@ class FLSearchEngine():
             start_date = datetime.datetime.combine(weekend[0], config['time_start'])
             back_date = datetime.datetime.combine(weekend[1], config['time_end'])
 
-            for (toFlightName, flightList) in toFlightList.items():
-                toFlights= [x for x in flightList if (
-                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-                    x['departure_DateTime'] >= start_date and x['departure_DateTime'] <= start_date +
-                    datetime.timedelta(days = flex_time)
-                )]
+            for flightSuite in toFlightList:
+                for (toFlightName, flightList) in flightSuite.items():
+                    toFlights= [x for x in flightList if (
+                        x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
+                        x['departure_DateTime'].date() >= start_date.date() and x['departure_DateTime'].date() <= start_date.date() +
+                        datetime.timedelta(days = flex_time)
+                    )]
 
-                if len(toFlights) > 0:
-                    l1.append({toFlightName: toFlights})
+                    if len(toFlights) > 0:
+                        l1.append({toFlightName: toFlights})
 
-            for (fromFlightName, flightList) in fromFlightList.items():
-                fromFlights = [x for x in flightList if (
-                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time) and
-                    x['arrival_DateTime'] >= back_date - datetime.timedelta(days = flex_time) and x['arrival_DateTime'] <= back_date
-                )]
-                if len(fromFlights) > 0:
-                    l2.append({fromFlightName: fromFlights})
+            for flightSuite in fromFlightList:
+                for (fromFlightName, flightList) in flightSuite.items():
+                    fromFlights = [x for x in flightList if (
+                        x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
+                        x['arrival_DateTime'].date() >= back_date.date() - datetime.timedelta(days = flex_time) and x['arrival_DateTime'].date() <= back_date.date()
+                    )]
+                    if len(fromFlights) > 0:
+                        l2.append({fromFlightName: fromFlights})
 
             if len(l1) > 0 and len(l2) > 0:
-                tmpFlightList['to'] = l1
-                tmpFlightList['from'] = l2
+                tmpFlightList['DEP'] = l1
+                tmpFlightList['RET'] = l2
+            else:
+                tmpFlightList['DEP'] = None
+                tmpFlightList['RET'] = None
+
             list.append(tmpFlightList)
 
         return list

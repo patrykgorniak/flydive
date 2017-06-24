@@ -1,4 +1,5 @@
 import json
+import operator
 import datetime
 import os
 import copy
@@ -31,6 +32,13 @@ class FlightScheduler():
                                   self.cfg['DATABASE']['server'],
                                   self.cfg['DATABASE']['pass'],
                                   self.cfg['DATABASE']['user'] )
+        self.currencyCache = {
+            self.currencyProvider.baseCurrencySymbol: 1,
+            "BAM" : 0.46,
+            "RSD" : 29.16,
+            "MKD" : 14.50,
+            "GEL" : 0.64
+        }
         self.log_dir = "logs"
 
     def log(self, message):
@@ -48,7 +56,7 @@ class FlightScheduler():
                 toList = []
                 returnList = []
                 date_from = datetime.datetime.combine(config['start'], datetime.datetime.min.time())
-                date_to = datetime.datetime.combine(config['end'], datetime.datetime.min.time())
+                date_to = datetime.datetime.combine(config['end'], datetime.datetime.max.time())
                 directionList = directionListSuite[dest]
                 for direction in directionList:
                     airports = []
@@ -171,7 +179,7 @@ class FlightScheduler():
                 if config['end'] > end_date:
                     end_date = config['end']
         start_date = datetime.datetime.combine(start_date, datetime.datetime.min.time())
-        end_date = datetime.datetime.combine(end_date, datetime.datetime.min.time())
+        end_date = datetime.datetime.combine(end_date, datetime.datetime.max.time())
         return (start_date, end_date)
 
     def getScheduleConfiguration(self, newsletterData):
@@ -221,7 +229,117 @@ class FlightScheduler():
 
         return scheduledFlightSuite
 
-    def calculateCosts(self, scheduledFlightSuite):
+
+    def findFastest(self,  directionList):
+        """TODO: Docstring for findFastest.
+
+        :scheduledFlightSuite: TODO
+        :returns: TODO
+
+        """
+        if directionList is None:
+            return None
+
+        fastestList = []
+        for directionDict in directionList: # [RET, DEP]
+            for directionKey, connectedFlightList in directionDict.items():
+                cities = directionKey.split("-")
+                connectionsList = [  "-".join([cities[i], cities[i+1] ]) for i in range(len(cities) - 1) ]
+                for connectedFlight in connectedFlightList:
+                    tmpList = []
+                    for connection in connectionsList:
+                        tmpList.append({ connection: connectedFlight[connection][0] })
+                    fastestList.append(tmpList)
+
+        sortedFlights = []
+        for flightSet in fastestList:
+            price = 0;
+            for flight in flightSet:
+                (k, v), = flight.items()
+                price += self.getPriceInBaseCurrency(v.price, v.currency)
+            (k1, v1), = flightSet[-1].items()
+            (k2, v2), = flightSet[0].items()
+            time = (v1.arrival_DateTime - v2.departure_DateTime).total_seconds()/(60*60)
+            dep_time = v2.departure_DateTime
+            ret_time = v1.arrival_DateTime
+
+            sortedFlights.append({ "arrival_DateTime": ret_time, "departure_DateTime": dep_time, 'price': round(price, 2), 'flightTimeInH': time, 'flightList': flightSet,
+                                  'currency': self.currencyProvider.baseCurrencySymbol} )
+
+        # sortedFlights = sorted(sortedFlights, key=operator.itemgetter(1))
+        sortedFlights = sorted(sortedFlights, key= lambda k: k['flightTimeInH'])
+        sortedFlights = sortedFlights[0:5] if len(sortedFlights) > 5 else sortedFlights
+
+        return sortedFlights
+
+    def buildList(self, resultList, tmpList, connectionsList, connectedFlight):
+        """TODO: Docstring for buildList.
+
+        :connectionsList: TODO
+        :connectedFlightList: TODO
+        :returns: TODO
+
+        """
+        if len(connectionsList) == 0:
+            resultList.append(tmpList)
+            return
+
+        connection = connectionsList[0]
+        for flight in connectedFlight[connection]:
+            myCopy = copy.deepcopy(tmpList)
+            myCopy.append({connection: flight})
+            self.buildList(resultList, myCopy, connectionsList[1:], connectedFlight)
+
+    def findCheapest(self, directionList):
+        """TODO: Docstring for findCheapest.
+
+        :scheduledFlightSuite: TODO
+        :returns: TODO
+
+        """
+        if directionList is None:
+            return None
+
+        cheapestList = []
+        for directionDict in directionList: # [RET, DEP]
+            for directionKey, connectedFlightList in directionDict.items():
+                cities = directionKey.split("-")
+                connectionsList = [  "-".join([cities[i], cities[i+1] ]) for i in range(len(cities) - 1) ]
+                for connectedFlight in connectedFlightList:
+                    self.buildList(cheapestList,[], connectionsList, connectedFlight)
+                # for connectedFlights in flightSet:
+                #     tmpList = []
+                #     for connection in connectionsList:
+                #         for flight in connectedFlights[connection]:
+                #             tmpList.append(flight)
+
+        sortedFlights = []
+        for flightSet in cheapestList:
+            price = 0;
+            for flight in flightSet:
+                (k, v), = flight.items()
+                price += self.getPriceInBaseCurrency(v.price, v.currency)
+            (k1, v1), = flightSet[-1].items()
+            (k2, v2), = flightSet[0].items()
+            dep_time = v2.departure_DateTime
+            ret_time = v1.arrival_DateTime
+
+            sortedFlights.append({ "arrival_DateTime": ret_time, "departure_DateTime": dep_time, 'price': round(price, 2), 'flightList': flightSet, 'currency': self.currencyProvider.baseCurrencySymbol})
+            sortedFlights = sorted(sortedFlights, key= lambda k: k['price'] )
+        return sortedFlights[0:5] if len(sortedFlights) > 5 else sortedFlights
+
+    def getPriceInBaseCurrency(self, price, currency):
+        currencySymbol = currency
+        if currencySymbol in self.currencyCache:
+            currencyRate = self.currencyCache[currencySymbol]
+        else:
+            currencyRate = \
+            self.currencyProvider.getCurrencyExchangeRate(currencySymbol)[currencySymbol]
+            self.currencyCache[currencySymbol] = currencyRate
+
+        return price/currencyRate
+
+    def calculateCosts(self,  scheduledFlightSuite):
         """TODO: Docstring for calculateCosts.
 
         :scheduledFlightSuite: TODO
@@ -233,36 +351,29 @@ class FlightScheduler():
             self.currencyProvider.baseCurrencySymbol: 1,
             "BAM" : 0.46,
             "RSD" : 29.16,
-            "MKD" : 14.50
+            "MKD" : 14.50,
+            "GEL" : 0.64
         }
 
         for trip in scheduledFlightSuite:
             for flightSuiteName, flightSuiteList in trip.items():
-                for directionKey, directionList in flightSuiteList.items():
-                    for direction in directionList:
-                        for flightName, flightList in direction.items():
-                            for direction in flightList:
-                                    fastestCalc = 0
-                                    cheapestCalc = 0
-                                    cheapest_departDateTime = 0
-                                    cheapest_arrivalDateTime = 0
-                                    for k, v in direction.items():
-                                        if type(v) is list:
-                                            currencySymbol = v[0].currency
-                                            if currencySymbol in currencyCache:
-                                                currencyRate = currencyCache[currencySymbol]
-                                            else:
-                                                currencyRate = \
-                                                self.currencyProvider.getCurrencyExchangeRate(currencySymbol)[currencySymbol]
-                                                currencyCache[currencySymbol] = currencyRate
-                                            
-                                            fastestCalc += v[0].price/currencyRate
-                                            tmpList = [ elem.price for elem in v ]
-                                            idx = tmpList.index(min(tmpList))
-                                            cheapestCalc += v[idx].price/currencyRate
-                                    direction['fastestTotalCost'] = round(fastestCalc, 2)
-                                    direction['cheapestTotalCost'] = round(cheapestCalc, 2)
+                if flightSuiteName is not "CONF":
+                    if int(trip['CONF']['mode']) == 0:
+                        for directionKey in ["DEP", "RET"]:
+                            if type(flightSuiteList[directionKey]) is list:
+                                cheapestList = self.findCheapest(flightSuiteList[directionKey])
+                                trip[flightSuiteName]['cheapest_{}'.format(directionKey)] = cheapestList
 
+                                fastestList = self.findFastest(flightSuiteList[directionKey])
+                                trip[flightSuiteName]['fastest_{}'.format(directionKey)] = fastestList
+                    else:
+                        for weekend in flightSuiteList:
+                            for directionKey in ["DEP", "RET"]:
+                                    cheapestList = self.findCheapest(weekend[directionKey])
+                                    weekend['cheapest_{}'.format(directionKey)] = cheapestList
+
+                                    fastestList = self.findFastest(weekend[directionKey])
+                                    weekend['fastest_{}'.format(directionKey)] = fastestList
         return scheduledFlightSuite
 
     def __isDirectionConsistent(self, direction):
@@ -314,6 +425,26 @@ class FlightScheduler():
 
         return { 'default': defaultConfig[1] }
 
+    def filterFlightPack2(self, flightSuiteList, configList):
+
+        tripList = []
+        for i, trip in enumerate(flightSuiteList):
+            filteredFlightPack = {}
+            for flightSuiteName, flightSuite in trip.items():
+                if flightSuiteName in configList[i]:
+                    config = configList[i][flightSuiteName]
+                else:
+                    config = [configList['default']]
+
+                lst = []
+                #for config in configs['configs']:
+                #lst.append({ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) })
+                filteredFlightPack[flightSuiteName] = self.filterFlights(flightSuiteName, flightSuite, config) #{ 'config': config, 'flights': self.filterFlights(flightSuiteName, flightSuite, config) }
+                filteredFlightPack['CONF'] = config
+            tripList.append(filteredFlightPack)
+
+        return tripList
+
     def filterFlightPack(self, flightSuiteList, configList):
         """TODO: Docstring for filterFlightPack.
 
@@ -354,13 +485,15 @@ class FlightScheduler():
             3: self.__scheduleMode3,
             4: self.__scheduleMode4
         }
-        toList, backList = self.flse.splitFlight(direction, flightSuite)
+        # toList, backList = self.flse.splitFlight(direction, flightSuite)
+        toList, backList = flightSuite['DEP'], flightSuite['RET']
         return options[scheduleDetails['mode']](direction, flightSuite, scheduleDetails, toList, backList)
 
     def __scheduleMode0(self, direction, flightSuite, config, toList, backList): # schedule flight in exact date and length
         # self.dumpToFile("{}_toList.txt".format(direction), toList)
         # self.dumpToFile("{}_backList.txt".format(direction), backList)
-        config['end'] = config['start'] + datetime.timedelta(days=int(config['days']))
+
+        #config['end'] = config['start'] + datetime.timedelta(days=int(config['days']))
         result = self.flse.findFlights(toList, backList, config)
         return result
 
@@ -372,8 +505,9 @@ class FlightScheduler():
         week = datetime.timedelta(days=7)
         date = config['start']
 
+        friday = 4;
         while date <= config['end']:
-            if date.weekday() == 4:
+            if date.weekday() == friday:
                 weekendList.append([date, date + afterWeekend])
                 date = date + week
             else:
