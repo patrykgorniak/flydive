@@ -83,6 +83,12 @@ def dms_to_dd_conv(dms_lat, dms_long):
      dd_long = conv_long if long_symbol=='E' else -conv_long
      return dd_lat, dd_long
 
+def run_cmd(cmd):
+    import subprocess
+    with subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True) as proc:
+        proc.wait()
+    
+
 class FLJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, FlightDetails):
