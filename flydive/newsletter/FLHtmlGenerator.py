@@ -89,7 +89,8 @@ class FLHtmlGenerator():
         return self.__insertColumnData(dates_str)
 
     def __insertPrice(self, total_price_dep, total_price_ret, currency):
-        price_str = "<b>Suma: {} {}</b><br><br>Wylot: {} {}<br>Powrot: {} {}".format(total_price_dep + total_price_ret, currency,
+        price_str = "<b>Suma: {} {}</b><br><br>Wylot: {} {}<br>Powrot: {} {}".format(round(total_price_dep +
+                                                                                           total_price_ret, 2), currency,
                                                                           total_price_dep, currency, total_price_ret,
                                                                           currency)
         return self.__insertColumnData( price_str )

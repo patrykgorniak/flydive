@@ -13,7 +13,6 @@ class FLNewsletter():
         attachments += " -a ".join(attachmentList)
         emails = " ".join(emailList)
         command = """echo "{}" | mutt {} -s"{}" -- {}""".format(message, attachments, title, emails)
-        print(command)
         tools.run_cmd(command)
 
     def prepare_HTML(self, calculatedFlights):
