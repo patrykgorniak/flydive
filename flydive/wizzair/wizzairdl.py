@@ -3,6 +3,7 @@ from wizzair.commonUrls import CommonData
 from common.tools import TimeTable
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
+from calendar import monthrange
 import re
 import json
 import os
@@ -15,7 +16,7 @@ class WizzairDl(object):
         """TODO: to be defined1. """
         self.cfg = CfgMgr().getConfig()
         self.base = os.path.join(os.path.dirname(os.path.realpath(__file__)),'../../tests/wizzair/testdata/')
-        self.__updateApiVersion()
+        self.api_version = self.__updateApiVersion()
         self.__fetchAirportAndConnections()
 
     def log(self, message=''):
@@ -28,6 +29,8 @@ class WizzairDl(object):
         CommonData.Search = CommonData.Search.format(api_version)
         self.log("Search api: {}".format(CommonData.Search))
         return api_version
+    def getApiVersion(self):
+        return self.api_version
 
 
     def getTimeTable(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"" }):
@@ -40,9 +43,10 @@ class WizzairDl(object):
         year = details['year']
         month = details['month']
 
-        url = CommonData.TimeTable
-        url = url.format(src_iata, dst_iata, year, month)
+        date_from = "{}-{}-01".format(year, month)
+        date_to = "{}-{}-{}".format(year, month, monthrange(year, month)[1])
 
+        url = CommonData.TimeTable.format(self.api_version, src_iata, dst_iata, date_from, date_to)
         filePath = os.path.join(self.base, '{0}_{1}_{2}_{3}.json'.format(src_iata, dst_iata, month, year))
 
         if self.cfg['DEBUGGING']['state'] == 'online':
@@ -55,7 +59,12 @@ class WizzairDl(object):
                 httpContent = f.read()
             f.close()
 
-        return json.loads(httpContent)
+        json_data = { 'Dates': json.loads(httpContent)['flightDates'],
+                     'DepartureStationCode': src_iata,
+                     'ArrivalStationCode': dst_iata
+                     }
+
+        return json_data
 
     def __fetchAirportAndConnections(self):
         self.log("fetchAirportAndConnections")

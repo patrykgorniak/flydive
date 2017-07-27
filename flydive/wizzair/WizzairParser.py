@@ -104,11 +104,13 @@ class WizzairParser(object):
 
         """
         timeTableList = []
-        for flight in JSONTimeTable:
-            if flight['Flights']:
-                timeTable = \
-                TimeTable(flight['DepartureStationCode'],flight['ArrivalStationCode'],datetime.strptime(flight['CurrentDate'],"%Y-%m-%d"))
-                timeTableList.append(timeTable)
+        src_iata = JSONTimeTable['DepartureStationCode']
+        dst_iata = JSONTimeTable['ArrivalStationCode']
+
+        for date in JSONTimeTable['Dates']:
+            currentdate = datetime.strptime(date,"%Y-%m-%dT%H:%M:%S")
+            timeTable = TimeTable(src_iata, dst_iata, currentdate)
+            timeTableList.append(timeTable)
 
         return timeTableList
 
