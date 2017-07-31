@@ -149,7 +149,7 @@ class FLHtmlGenerator():
             dep_price = flightData[type_key_dep][i]['price']
             currency = flightData[type_key_dep][i]['currency']
             dep_flights = "Wyloty:<br>\n"
-            for i, flight in enumerate(flightData[type_key_dep][i]['flightList']):
+            for flight in flightData[type_key_dep][i]['flightList']:
                 key = list(flight.keys())[0]
                 dep_flights += "{} - Linia: {}, Termin: {}, Cena: {}<br>\n".format(key,
                     flight[key].connection.carrierCode,
