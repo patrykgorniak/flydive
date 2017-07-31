@@ -26,6 +26,6 @@ class FLNewsletter():
 
             with open("logs/{}.html".format(trip_name), "w") as file:
                 file.write(html)
+                file.close()
                 emailList = trip['CONF']['email']
                 self.sendEmail(emailList, [ file.name ])
-                file.close()
