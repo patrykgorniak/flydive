@@ -120,7 +120,7 @@ class FLHtmlGenerator():
                 else:
                     for weekend in flightSuiteList:
                         if weekend['RET'] is None:
-                            break
+                            continue
 
                         for type in ["cheapest", "fastest"]:
                             type_key_dep = "{}_DEP".format(type)

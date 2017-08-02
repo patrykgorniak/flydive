@@ -514,8 +514,11 @@ class FlightScheduler():
         week = datetime.timedelta(days=7)
         date = config['start']
         while date <= config['end']:
-            if date.weekday() in [2, 3]:
-                weekendList.append([date, date + afterWeekend])
+            if date.weekday() in [2, 3, 5]:
+                if date.weekday() < 4:
+                    weekendList.append([date, date + datetime.timedelta(6 - date.weekday())])
+                else:
+                    weekendList.append([date, date + datetime.timedelta(days=3)])
             date = date + day
 
         result = self.flse.findWeekendFlights(toList, backList, config, weekendList)
