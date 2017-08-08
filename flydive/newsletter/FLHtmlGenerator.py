@@ -135,7 +135,8 @@ class FLHtmlGenerator():
 
     def addFlight(self, flightData, type_key_dep, type_key_ret):
         html_data = ""
-        for i in range(min(3, len(flightData[type_key_dep]) )):
+
+        for i in range( min( min (len(flightData[type_key_ret]), len(flightData[type_key_dep]) ), 3)):
             if 'w' in flightData:
                 dates = flightData['w']
             else:
@@ -145,6 +146,7 @@ class FLHtmlGenerator():
 
             html_data += self.__openTableRow()
             html_data += self.__insertDates(dates)
+
             dep_changes = len(flightData[type_key_dep][i]['flightList'])
             dep_price = flightData[type_key_dep][i]['price']
             currency = flightData[type_key_dep][i]['currency']
