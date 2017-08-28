@@ -4,9 +4,9 @@ import datetime
 import itertools
 
 class NewsletterManager():
-    def __init__(self):
-        self.filename = "newsletter_db.json"
-        self.path = os.path.join("configs", self.filename)
+    def __init__(self, newsletter_file = "configs/newsletter_db.json"):
+        self.path = newsletter_file
+        # self.path = os.path.join("configs", self.filename)
         with open(self.path) as file:
             self.configs = json.load(file , object_hook=self.date_hook)
 

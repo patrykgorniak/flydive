@@ -16,7 +16,7 @@ class FlyDive():
 
         self.flydivePluginManager = FLPluginManager()
         self.flydiveScheduler = FlightScheduler()
-        self.newsletterMgr = NewsletterManager()
+        self.newsletterMgr = NewsletterManager(self.args.config)
         self.newsletter = FLNewsletter()
 
     def registerPlugins(self):
@@ -32,7 +32,7 @@ class FlyDive():
     def initArgParser(self):
         parser = argparse.ArgumentParser(description="Flydive - help")
         parser.add_argument('-s', '--schedule', action='store_true', help='Run scheduler')
-        # parser.add_argument('-c','--connections', action='store_true', help='Update connections')
+        parser.add_argument('-c','--config', help='JSON config file', default="configs/newsletter_db.json")
         parser.add_argument('-d', '--debug', action='store_true', help='dump files')
         # parser.add_argument('-s', '--schedule', action='store_true', help='Init airports')
         args = parser.parse_args()
