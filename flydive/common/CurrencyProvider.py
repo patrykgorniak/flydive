@@ -40,10 +40,27 @@ class CurrencyProvider:
         :returns: TODO
         """
         url = "http://api.fixer.io/latest?symbols={}&base={}".format(currencySymbol, baseCurrencySymbol)
-        resp = HttpManager.getMethod(url).text
-        json_data = json.loads(resp)['rates']
+        url2 = \
+        "http://apilayer.net/api/live?access_key=ffa47d756dc89a895e23a7afa65b49b6&currencies={},PLN&format=1".format(currencySymbol)
+        resp = HttpManager.getMethod(url)
+        if resp is not None:
+            json_data = json.loads(resp.text)['rates']
+        else:
+            resp = HttpManager.getMethod(url2)
+            json_data = { currencySymbol: self.parseApiLayer(resp, currencySymbol) }
 
         return json_data
+
+    def parseApiLayer(self, inputData, currency):
+        """TODO: Docstring for parseApiLayer.
+        """
+        
+        json_data = json.loads(inputData.text)
+        currencyRate = json_data['quotes']["USD"+currency]
+        baseRate = json_data['quotes']["USDPLN"]
+        tmp = 1.0/currencyRate
+        currencyToPLN = baseRate * tmp
+        return 1.0/currencyToPLN
 
 if __name__ == "__main__":
     tool = getCurrencyProvider()
