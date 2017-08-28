@@ -12,6 +12,7 @@ def getMethod(url, params = {}, proxy = {}):
         return r;
     time.sleep(1)
 
+    debug("Url" + url)
     return None
 
 def postMethod(url, json_data = {}, proxy = {}):
