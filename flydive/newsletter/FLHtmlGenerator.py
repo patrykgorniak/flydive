@@ -110,7 +110,7 @@ class FLHtmlGenerator():
             if flightSuiteName is not "CONF":
                 html_data += self.__getHeader(flightSuiteName)
                 if int(trip['CONF']['mode']) == 0:
-                    for type in ["cheapest", "fastest"]:
+                    for type in ["cheapest"]:
                         type_key_dep = "{}_DEP".format(type)
                         type_key_ret = "{}_RET".format(type)
                         html_data +=self.__getH3Header(type.capitalize())
@@ -122,7 +122,7 @@ class FLHtmlGenerator():
                         if weekend['RET'] is None:
                             continue
 
-                        for type in ["cheapest", "fastest"]:
+                        for type in ["cheapest"]:
                             type_key_dep = "{}_DEP".format(type)
                             type_key_ret = "{}_RET".format(type)
                             html_data +=self.__getH3Header(type.capitalize())
