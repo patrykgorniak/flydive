@@ -22,8 +22,17 @@ class DownloadThread(Thread):
         self.task_queue.join()
 
     def initProxyList(self):
-        return Constants.proxylist
+        proxyTxt = HttpManager.getMethod("http://multiproxy.org/txt_all/proxy.txt").text
+        # return Constants.proxylist
+        return self.parseProxyTxt(proxyTxt)
 
+    def parseProxyTxt(self, proxyListTxt):
+        """TODO: Docstring for parsePro."""
+
+        proxyList = []
+        for proxy in proxyListTxt.split("\n"):
+            proxyList.append( {"http" : proxy } )
+        return proxyList
 
     def worker(self, i, q):
         lm.debug("Created {}".format(i))
