@@ -149,8 +149,8 @@ class FLSearchEngine():
             for flightName, flightList  in flightSuite.items():
                tmp = [x for x in flightList if (
                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
-                   x['departure_DateTime'] >= start_date and
-                   x['departure_DateTime'] <= start_date + datetime.timedelta(days=flex_time)
+                   x['departure_DateTime'].date() >= start_date.date() and
+                   x['departure_DateTime'].date() <= start_date.date() + datetime.timedelta(days=flex_time)
                ) ]
     
                if len(tmp) > 0:
@@ -160,8 +160,8 @@ class FLSearchEngine():
             for flightName, flightList  in flightSuite.items():
                tmp = [x for x in flightList if (
                    x['arrival_DateTime'] - x['departure_DateTime'] <= datetime.timedelta(hours = max_change_time + x['flightTime']) and
-                   x['arrival_DateTime'] >= back_date - datetime.timedelta(days=flex_time) and
-                   x['arrival_DateTime'] <= back_date
+                   x['arrival_DateTime'].date() >= back_date.date() - datetime.timedelta(days=flex_time) and
+                   x['arrival_DateTime'].date() <= back_date.date()
                ) ]
     
                if len(tmp) > 0:

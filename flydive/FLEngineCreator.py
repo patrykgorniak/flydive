@@ -66,8 +66,8 @@ class FLEngineCreator(FLPlugin):
         self.connections = []
         self.proceedList = []
 
-        date_from = config['date_from'] #self.currentDate + delay_data;
-        date_to = config['date_to'] #date_from + monthdelta(self.month_delta)
+        date_from = config['date_from'] - datetime.timedelta(days=6) #self.currentDate + delay_data;
+        date_to = config['date_to'] + datetime.timedelta(days=6)    #date_from + monthdelta(self.month_delta)
         self.log("Flights update between: {} - {}".format(date_from, date_to))
 
         self.connections.extend(self.__prepareConnectionsQuery(paths, connectionList))
