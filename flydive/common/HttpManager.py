@@ -12,13 +12,14 @@ def getMethod(url, params = {}, proxy = {}):
         return r;
     time.sleep(1)
 
-    debug("Url" + url)
+    debug("Url get method: " + url)
     return None
 
 def postMethod(url, json_data = {}, proxy = {}):
     r = requests.post(url, json = json_data, proxies = proxy)
     if (r.status_code == requests.codes.ok):
         return r;
+    debug("Url post method: " + url)
     time.sleep(1)
 
     return None
