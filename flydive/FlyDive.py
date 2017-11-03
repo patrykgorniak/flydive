@@ -18,13 +18,14 @@ class FlyDive():
         self.flydiveScheduler = FlightScheduler()
         self.newsletterMgr = NewsletterManager(self.args.config)
         self.newsletter = FLNewsletter()
+        self.enabled_airlines = []
 
     def registerPlugins(self):
         if self.cfg['PLUGINS']['wizzair']=='on':
-            self.flydivePluginManager.registerPlugin(WizzairPlugin)
+            self.enabled_airlines.append(self.flydivePluginManager.registerPlugin(WizzairPlugin))
 
         if self.cfg['PLUGINS']['ryanair']=='on':
-            self.flydivePluginManager.registerPlugin(RyanairPlugin)
+            self.enabled_airlines.append(self.flydivePluginManager.registerPlugin(RyanairPlugin))
 
     def setupLogger(self, cfg, dump_files):
         LogMgr.init(dump_files, dirname=cfg['config_dir'], configFileName=cfg['config_name'])
@@ -50,7 +51,8 @@ class FlyDive():
         newsletter_CfgList = self.newsletterMgr.unpack()
         self.flydiveScheduler.dumpToFile("Newsletter_CfgList.txt", newsletter_CfgList)
 
-        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree([ x for y in newsletter_CfgList for x in list(y.keys())]) #list(newsletter_CfgList.keys()))
+        flightTree, connectionList = self.flydiveScheduler.getConnectionsTree([ x for y in newsletter_CfgList for x in
+                                                                               list(y.keys())], self.enabled_airlines)
         self.flydiveScheduler.dumpToFile("connectionsTree.txt", flightTree)
 
         # # Register all FlyDive plugins

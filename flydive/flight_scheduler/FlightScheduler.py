@@ -137,11 +137,11 @@ class FlightScheduler():
 
     #     return scheduledFlightSuite
 
-    def getConnectionsTree(self, directionList):
+    def getConnectionsTree(self, directionList, airlines = []):
         assert isinstance(directionList, list), "DirectionList is not List."
         paths = {}
-        # paths = []
-        connectionList = self.db.getOrderedConnections()
+        order = []
+        connectionList = self.db.getOrderedConnections(order, airlines)
         graph = tools.dumpConnectionsToGraph(connectionList, self.excluded_cities)
 
         for direction in directionList:

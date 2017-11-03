@@ -27,6 +27,7 @@ class FLPluginManager(object):
 
         lm.debug("New plugin registered: {}".format(FLPluginType))
         self.plugins.append(plugin)
+        return plugin.getAirlineCode()
 
     def initConnections(self):
         for plugin in self.plugins:

@@ -18,3 +18,6 @@ class RyanairPlugin(FLEngineCreator):
 
     def run(self, flightTree, connectionList, config):
         FLEngineCreator.run(self, flightTree, connectionList, config)
+
+    def getAirlineCode(self):
+        return RyanairData.carrierCode

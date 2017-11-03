@@ -138,14 +138,22 @@ class DatabaseManager(object):
         # query = session.query(Connections.src_iata, Connections.dst_iata).filter_by(**filter_by)
         return connectionsList
 
-    def getOrderedConnections(self, order = []):
+    def getOrderedConnections(self, order = [], airlines = []):
         # session = self.Session()
-        connectionList = self.session.query(Connections).join(Airport).\
+        main_query = self.session.query(Connections).filter(Connections.carrierCode.in_(airlines)).join(Airport)
+        connectionList = main_query.\
                 filter(Airport.currency_code=='PLN').all()
-        connectionList.extend(self.session.query(Connections).join(Airport).\
+        connectionList.extend(main_query.\
                 filter(Airport.currency_code=='EUR').all())
-        connectionList.extend(self.session.query(Connections).join(Airport).\
+        connectionList.extend(main_query.\
                 filter(Airport.currency_code!='PLN', Airport.currency_code!='EUR').all())
+
+        # connectionList = self.session.query(Connections).join(Airport).\
+        #         filter(Airport.currency_code=='PLN').all()
+        # connectionList.extend(self.session.query(Connections).join(Airport).\
+        #         filter(Airport.currency_code=='EUR').all())
+        # connectionList.extend(self.session.query(Connections).join(Airport).\
+        #         filter(Airport.currency_code!='PLN', Airport.currency_code!='EUR').all())
 
         return connectionList
 

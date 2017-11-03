@@ -1,7 +1,5 @@
 class FLPlugin():
-
     def __init__(self):
-        # self.db = dbAccess
         self.airportsReady = False
         self.connectionsReady = False
 
@@ -13,3 +11,7 @@ class FLPlugin():
 
     def initConnections(self):
         assert False, "Base class: not implemented."
+
+    def getAirlineCode(self):
+        assert False, "Base class: not implemented."
+
