@@ -4,6 +4,7 @@ from common.tools import TimeTable
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
 from calendar import monthrange
+import datetime
 import re
 import json
 import os
@@ -43,7 +44,8 @@ class WizzairDl(object):
         year = details['year']
         month = details['month']
 
-        date_from = "{}-{}-01".format(year, month)
+        date = max(datetime.date( year, month, 1), datetime.date.today())
+        date_from = date.strftime("%Y-%m-%d") #{}-{}-01".format(year, month)
         date_to = "{}-{}-{}".format(year, month, monthrange(year, month)[1])
 
         url = CommonData.TimeTable.format(self.api_version, src_iata, dst_iata, date_from, date_to)

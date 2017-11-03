@@ -30,7 +30,8 @@ class RyanairDl():
         month = details['month']
 
         # TODO: handle invalid request ex. https://api.ryanair.com/farefinder/3/roundTripFares/WRO/BLQ/cheapestPerDay?outboundMonthOfDate=2017-5-01&market=pl-pl
-        date = datetime.date(year, month, 1)
+        # date = datetime.date(year, month, 1)
+        date = max(datetime.date( year, month, 1), datetime.date.today())
         url = RyanairData.CommonData.TimeTable
         url = url.format(src_iata, dst_iata, str(date))
 

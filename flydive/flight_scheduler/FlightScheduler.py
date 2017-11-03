@@ -55,8 +55,8 @@ class FlightScheduler():
                 scheduledFlights = {}
                 toList = []
                 returnList = []
-                date_from = datetime.datetime.combine(config['start'], datetime.datetime.min.time())
-                date_to = datetime.datetime.combine(config['end'], datetime.datetime.max.time())
+                date_from = datetime.datetime.combine(config['start'] - datetime.timedelta(days=config['flex_time']), datetime.datetime.min.time())
+                date_to = datetime.datetime.combine(config['end'] + datetime.timedelta(days=config['flex_time']), datetime.datetime.max.time())
                 directionList = directionListSuite[dest]
                 for direction in directionList:
                     airports = []

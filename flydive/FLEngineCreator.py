@@ -71,33 +71,33 @@ class FLEngineCreator(FLPlugin):
         self.log("Flights update between: {} - {}".format(date_from, date_to))
 
         self.connections.extend(self.__prepareConnectionsQuery(paths, connectionList))
-
-        if self.dump_restore_session and self.session.isSaved():
-            self.connections.extend(self.session.restoreSession())
-            self.session.close()
-
-        oneWayIdxList = self.__getOneWayConnectionIndexList(self.connections);
-        self.log("Connections: {}".format(len(self.connections)))
-        self.log("OneWayIdx: {}".format(len(oneWayIdxList)))
-
-        assert (len(oneWayIdxList)*2) == len(self.connections)
-
-        if not self.flight_detail_bypass:
-            try:
-                self.__getFlightDetails(date_from, date_to, oneWayIdxList)
-            except:
-                if self.dump_restore_session:
-                    lm.debug("Session dumped!")
-                    connectionsLeftList = []
-                    if len(self.proceedList) % 2 != 0:
-                        self.proceedList.pop()
-                    connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
-                    if(len(connectionsLeftList)):
-                        self.session.save(connectionsLeftList)
-
-                print("Unexpected error:", sys.exc_info()[0])
-                lm.exception()
-                raise
+        if len(self.connections) > 0:            
+            if self.dump_restore_session and self.session.isSaved():
+                self.connections.extend(self.session.restoreSession())
+                self.session.close()
+    
+            oneWayIdxList = self.__getOneWayConnectionIndexList(self.connections);
+            self.log("Connections: {}".format(len(self.connections)))
+            self.log("OneWayIdx: {}".format(len(oneWayIdxList)))
+    
+            assert (len(oneWayIdxList)*2) == len(self.connections)
+    
+            if not self.flight_detail_bypass:
+                try:
+                    self.__getFlightDetails(date_from, date_to, oneWayIdxList)
+                except:
+                    if self.dump_restore_session:
+                        lm.debug("Session dumped!")
+                        connectionsLeftList = []
+                        if len(self.proceedList) % 2 != 0:
+                            self.proceedList.pop()
+                        connectionsLeftList.extend([x for x in connections if x not in self.proceedList])
+                        if(len(connectionsLeftList)):
+                            self.session.save(connectionsLeftList)
+    
+                    print("Unexpected error:", sys.exc_info()[0])
+                    lm.exception()
+                    raise
 
         self.return_q.join()
         self.asyncDlMgr.finished(self.return_q)
@@ -110,7 +110,12 @@ class FLEngineCreator(FLPlugin):
     def __getFlightDetails(self, date_from, date_to, oneWayIdxList):
         
         for i, idx in enumerate(oneWayIdxList):
-            for delta in range(date_to.month - date_from.month + 1):
+            if date_to.year == date_from.year:
+                months = int(((date_to - date_from).days)/30) + 1
+            else:
+                months = int(((date_to - date_from).days)/30) + 2
+            for delta in range(months):
+                
                 time = date_from + monthdelta(delta)
 
                 timeTableList = self.__getTimeTable(time, self.connections[idx]) #get timetable for given year-month
@@ -219,6 +224,7 @@ class FLEngineCreator(FLPlugin):
 
     def __handleFlightDetails(self, flightDetalsList):
         connection = None
+        self.log("Flight details arrived.")
 
         for item in flightDetalsList:
             connection = [x for x in self.connections if x==item][0]  #TODO: should be changed, maybe to HASH MAP
