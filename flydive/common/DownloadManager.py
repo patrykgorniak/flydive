@@ -6,6 +6,8 @@ from common import LogManager as lm
 from common import Constants 
 from common.ConfigurationManager import CfgMgr
 import random
+import time
+import sys, os
 
 class DownloadThread(Thread):
     """Docstring for DownloadManager. """
@@ -22,16 +24,22 @@ class DownloadThread(Thread):
         self.task_queue.join()
 
     def initProxyList(self):
-        proxyTxt = HttpManager.getMethod("http://multiproxy.org/txt_all/proxy.txt").text
+        file = open("configs/proxy.txt")
+        proxyTxt = file.read()
+        file.close()
+        file = open("configs/https_proxy.txt")
+        httpsProxyTxt = file.read()
+        file.close()
+        # proxyTxt = HttpManager.getMethod("http://multiproxy.org/txt_all/proxy.txt").text
         # return Constants.proxylist
-        return self.parseProxyTxt(proxyTxt)
+        return self.parseProxyTxt(proxyTxt, httpsProxyTxt)
 
-    def parseProxyTxt(self, proxyListTxt):
-        """TODO: Docstring for parsePro."""
+    def parseProxyTxt(self, proxyListTxt, httpsProxyTxt):
 
         proxyList = []
-        for proxy in proxyListTxt.split("\n"):
-            proxyList.append( {"http" : proxy } )
+        # for http, https in zip(httpsProxyTxt.split("\n"), proxyListTxt.split("\n")):
+        for http in proxyListTxt.split("\n"):
+            proxyList.append( {"http" : http} )
         return proxyList
 
     def worker(self, i, q):
@@ -45,7 +53,7 @@ class DownloadThread(Thread):
 
             if method is None:
                 lm.debug("Method NONE.")
-                while not q.empty():
+                while not q.empty() and not ret_q.empty():
                     lm.debug("Queue is not empty")
                     sleep(1)
                 lm.debug("Queue is empty")
@@ -54,24 +62,28 @@ class DownloadThread(Thread):
                 while True:
                     if counter == limit:
                         lm.debug("No response from server.")
-                        break
+                        ret_q.put( {'data':None} )
 
                     proxy = self.proxyList[random.randrange(0,len(self.proxyList))]
                     lm.debug("Worker: {} Method {} PROXY: {}".format(i, task['M'], proxy))
                     if method == 0:
+                        # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.getMethod(task['url'], proxy)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
                         else:
                             lm.debug("Request error for: {} {}".format(task['url'], proxy))
+                            os._exit(1)
                     else:
+                        # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.postMethod(task['url'], task['params'], proxy)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
                         else:
                             lm.debug("Request error for: {} {}".format(task['url'], proxy))
+                            os._exit(1)
                     counter = counter + 1
 
             q.task_done()
@@ -100,6 +112,7 @@ class AsyncDownloadManager():
 
     def finished(self, return_fifo):
         lm.debug("Send finished")
+        self.q.join();
         task = { "M": None, "return": return_fifo }
         self.q.put(task)
 
