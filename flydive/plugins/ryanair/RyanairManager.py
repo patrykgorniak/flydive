@@ -1,7 +1,7 @@
 from FLEngineCreator import FLEngineCreator
-from ryanair.RyanairDl import RyanairDl
-from ryanair.RyanairParser import RyanairParser
-from ryanair import RyanairUrls as RyanairData
+from plugins.ryanair.RyanairDl import RyanairDl
+from plugins.ryanair.RyanairParser import RyanairParser
+from plugins.ryanair import RyanairUrls as RyanairData
 from common.SessionManager import SessionManager
 
 class RyanairPlugin(FLEngineCreator):

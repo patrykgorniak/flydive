@@ -5,8 +5,8 @@ import time
 def debug(msg):
     lm.debug("HttpManager: {0}".format(msg))
     
-def getMethod(url, params = {}, proxy = {}):
-    r = requests.get(url, proxies = proxy)
+def getMethod(url, params = {}, proxy = {}, headers = {}):
+    r = requests.get(url, proxies = proxy, headers=headers)
 
     if (r.status_code == requests.codes.ok):
         return r;

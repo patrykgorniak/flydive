@@ -3,44 +3,8 @@
 	  "configs": [
 		{
 		  "mode": 0,
-		  "start": "2017-07-08",
-		  "end": "2017-07-16",
-		  "time_start": "00:00:00",
-		  "time_end": "08:00:00",
-		  "days": 7,
-		  "max_changes": 3,
-		  "flex_time": 2,
-		  "max_change_time": 48,
-		  "email": [
-			  "patryk.lukasz.gorniak@gmail.com"
-		  ]
-		}
-	  ]
-  },
-  "KTW-KEF": {
-	  "configs": [
-		{
-		  "mode": 0,
-		  "start": "2017-07-08",
-		  "end": "2017-07-16",
-		  "time_start": "00:00:00",
-		  "time_end": "08:00:00",
-		  "days": 7,
-		  "max_changes": 3,
-		  "flex_time": 2,
-		  "max_change_time": 48,
-		  "email": [
-			  "patryk.lukasz.gorniak@gmail.com"
-		  ]
-		}
-	  ]
-  },
-  "WAW-KEF": {
-	  "configs": [
-		{
-		  "mode": 0,
-		  "start": "2017-07-08",
-		  "end": "2017-07-16",
+		  "start": "2018-02-08",
+		  "end": "2017-02-24",
 		  "time_start": "00:00:00",
 		  "time_end": "08:00:00",
 		  "days": 7,

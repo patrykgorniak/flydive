@@ -142,28 +142,14 @@ class FlightScheduler():
         paths = {}
         order = []
         connectionList = self.db.getOrderedConnections(order, airlines)
+#         self.dumpToFile("connectionList.txt", connectionList)
         graph = tools.dumpConnectionsToGraph(connectionList, self.excluded_cities)
+#         self.dumpToFile("graph.txt", graph)
 
         for direction in directionList:
             src_iata = direction.split("-")[0]
             dst_iata = direction.split("-")[1]
             paths[direction] = BFS(graph, self.search_depth, src_iata, dst_iata)
-
-        # for src_iata in self.departure_cities:
-        #     for dst_iata in self.arrival_cities:
-        #         k = "{}-{}".format(src_iata, dst_iata)
-        #         paths[k] = BFS(graph, self.search_depth, src_iata, dst_iata)
-        #         # paths.extend(BFS(graph, self.search_depth, src_iata, dst_iata))
-
-        # if lm.enabled():
-        #     with open(os.path.join(self.log_dir, "connectionsTree.txt"),'w') as f:
-        #         json.dump(paths, f, cls=tools.FLJsonEncoder, indent=4)
-        #     f.close()
-
-        #     with open(os.path.join(self.log_dir, "graph.txt"),'w') as f:
-        #         json.dump(graph, f, cls=tools.FLJsonEncoder, indent=4)
-        #     f.close()
-
         return paths, connectionList
 
     def getConfigurationDates(self, newsletterData):

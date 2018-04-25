@@ -1,9 +1,9 @@
 from common.SessionManager import SessionManager
 from FLEngineCreator import FLEngineCreator
 
-from wizzair.wizzairdl import WizzairDl
-from wizzair.WizzairParser import WizzairParser
-from wizzair import commonUrls as WizzData
+from plugins.wizzair.wizzairdl import WizzairDl
+from plugins.wizzair.WizzairParser import WizzairParser
+from plugins.wizzair import commonUrls as WizzData
 
 
 class WizzairPlugin(FLEngineCreator):

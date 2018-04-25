@@ -25,6 +25,8 @@ class GeoNameProvider():
             name = re.sub(r' \(.*\)','',name)
             url = self.url_base2.format(name, self.user)
             json_data = self.searchByName(url)
+            airport.latitude = json_data['lat'] if 'lat' in json_data else None
+            airport.longitude = json_data['lng'] if 'lng' in json_data else None
         else:
             url = self.url_base.format(lat, long, self.user)
             json_data = self.searchByGeo(url)

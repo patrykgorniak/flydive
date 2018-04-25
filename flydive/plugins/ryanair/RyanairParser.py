@@ -1,7 +1,7 @@
 from common import tools
 from common.tools import TimeTable
 from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
-from ryanair import RyanairUrls as RyanairData
+from plugins.ryanair import RyanairUrls as RyanairData
 import calendar
 import datetime
 
@@ -64,7 +64,9 @@ class RyanairParser():
                     airport = Airport(iata=airport['iataCode'],
                                       name=airport['name'],
                                       latitude=airport['coordinates']['latitude'],
-                                      longitude=airport['coordinates']['longitude']
+                                      longitude=airport['coordinates']['longitude'],
+                                      country_code=airport['countryCode'],
+                                      currency_code=airport['currencyCode'],
                                       )
                 airportList.append(airport)
         else:
@@ -78,30 +80,37 @@ class RyanairParser():
                 airportList.append(airport)
         return airportList
 
-    def extractJSONConnectionToList(self, connections):
+    def extractJSONConnectionToList(self, connectionJSON):
         connectionList = []
-        DS = connections['iataCode']
-        for route in connections['routes']:
-            route_split = route.split(':')
-            if route_split[0]=='airport':
-                connection = Connections(src_iata = DS,
-                                         dst_iata = route_split[1],
-                                         carrierCode = RyanairData.carrierCode
-                                         )
-                connectionList.append(connection)
+        
+        for c in connectionJSON:
+#             if c['connectingAirport']:
+#                 continue
+            connectionList.append(Connections(src_iata = c['airportFrom'],
+                                             dst_iata = c['airportTo'],
+                                             carrierCode = RyanairData.carrierCode
+                                             )
+                                  )
+        
+#         
+#         for connectionsFromAirport in connections:
+#             DS = connectionsFromAirport['iataCode']
+#             for route in connections['routes']:
+#                 route_split = route.split(':')
+#                 if route_split[0]=='airport':
+#                     connection = Connections(src_iata = DS,
+#                                              dst_iata = route_split[1],
+#                                              carrierCode = RyanairData.carrierCode
+#                                              )
+#                     connectionList.append(connection)
         return connectionList
 
     def extractJSONTimeTable(self, JSONTimeTable, flightDetails):
-        if not JSONTimeTable['outbound']['minFare']:
-            return []
+        assert len(JSONTimeTable['from']) == len(JSONTimeTable['to'])
 
         timeTableList = []
-        lastDayInMonth =  calendar.monthrange(flightDetails['year'], flightDetails['month'])[1]
-        for day in range(1, lastDayInMonth, 6):
-            timeTable = \
-            TimeTable(flightDetails['src_iata'], flightDetails['dst_iata'], datetime.datetime(flightDetails['year'],
-                                                                                              flightDetails['month'],
-                                                                                              day))
+        for flight in JSONTimeTable['from']:
+            timeTable = TimeTable(flightDetails['src_iata'], flightDetails['dst_iata'], datetime.datetime.strptime(flight,'%Y-%m-%d'))
             timeTableList.append(timeTable)
 
         return timeTableList

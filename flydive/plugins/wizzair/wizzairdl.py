@@ -1,5 +1,5 @@
 from common import HttpManager
-from wizzair.commonUrls import CommonData
+from plugins.wizzair.commonUrls import CommonData
 from common.tools import TimeTable
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
@@ -146,6 +146,9 @@ class WizzairDl(object):
             ]
         }
         return params
+
+    def getFlightDetails(self, url, params = {}, proxy = {}, headers = {}):
+        return HttpManager.getMethod(url)
 
     def getFlightDetails(self, flight):
         """TODO: Docstring for __searchFlight.

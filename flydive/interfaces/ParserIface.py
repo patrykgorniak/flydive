@@ -7,34 +7,15 @@ class ParserIface():
         pass
 
     def extractJSONFlightDetails(self, flightDetailsJSON):
-        """TODO: Docstring for extractJSONFlightDetails.
-
-        :flightDetailsJSON: TODO
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def extractJSONTimeTable(self, timeTableJSON):
-        """TODO: Docstring for extractJSONTimeTable.
-
-        :timeTableJSON: TODO
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def extractJSONAirportsToList(self, airportsJSON):
-        """TODO: Docstring for extractJSONAirportsToList.
-
-        :airportsJSON: TODO
-        :returns: TODO
-
-        """
-        pass
-
+        assert False, "Base class: not implemented."
 
     def extractJSONConnectionToList(self, connectionJSON):
-        pass
+        assert False, "Base class: not implemented."
 
 

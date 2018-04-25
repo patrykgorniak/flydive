@@ -1,6 +1,6 @@
 from common.DatabaseModel import Airport, Connections, Airline, FlightDetails
 from datetime import datetime
-from wizzair import commonUrls as WizzData
+from plugins.wizzair import commonUrls as WizzData
 from common.tools import TimeTable
 from common import LogManager as lm
 
@@ -22,13 +22,14 @@ class WizzairParser(object):
 
         """
         connectionList = []
-        for ASL in JSONConnections['ASL']:
-            self.log("Parse connection from: {0} to {1}".format(ASL['SC'], JSONConnections['DS']))
-            connections = Connections(src_iata=ASL['SC'],
-                                      dst_iata = JSONConnections['DS'],
-                                      carrierCode = WizzData.carrierCode
-                                      )
-            connectionList.append(connections)
+        for connectionsFromAirport in JSONConnections:
+            for ASL in connectionsFromAirport['ASL']:
+                self.log("Parse connection from: {0} to {1}".format(ASL['SC'], connectionsFromAirport['DS']))
+                connections = Connections(src_iata=ASL['SC'],
+                                          dst_iata = connectionsFromAirport['DS'],
+                                          carrierCode = WizzData.carrierCode
+                                          )
+                connectionList.append(connections)
 
         return connectionList
 

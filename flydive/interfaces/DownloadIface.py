@@ -3,46 +3,22 @@ class DownloadIface():
         pass
 
     def getFightDetails(self, flight):
-        """TODO: Docstring for getFightDetails.
-
-        :flights: TODO
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def packParamsToJSON(self, flight):
-        """TODO: Docstring for packParamsToJSON.
-
-        :flight: TODO
-        :returns: TODO
-
-        """
-        pass
-
+        assert False, "Base class: not implemented."
 
     def getTimeTable(self, details):
-        """TODO: Docstring for getTimeTable.
-
-        :details: TODO
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def getAirports(self):
-        """TODO: Docstring for getAirports.
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def getConnections(self):
-        """TODO: Docstring for getConnections.
-        :returns: TODO
-
-        """
-        pass
+        assert False, "Base class: not implemented."
 
     def prepareUrl(self, flight):
-        pass
+        assert False, "Base class: not implemented."
+
+    def getFlightDetails(self, url, params = {}, proxy = {}, headers = {}):
+        assert False, "Base class: not implemented."

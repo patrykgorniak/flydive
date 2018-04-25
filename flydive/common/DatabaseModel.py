@@ -167,8 +167,8 @@ class Statistics(Base, Helper):
     __tablename__ = 'statistics'
     id = Column(Integer, primary_key = True)
     airline_code = Column(String(10), ForeignKey('airline.carrierCode'))
-    airportCount = Column(Integer, nullable = False)
-    connectionCount = Column(Integer, nullable = False)
+    airportCount = Column(Integer, nullable = False, default = 0)
+    connectionCount = Column(Integer, nullable = False, default = 0)
 
     def __str__(self):
         return "Statistics for {}: {} airports, {} connections".format(self.airline_code, airportCount, connectionCount)

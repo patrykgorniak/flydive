@@ -1,12 +1,14 @@
 import argparse
 from FLPluginManager import FLPluginManager
 from newsletter.FLNewsletter import FLNewsletter
-from wizzair.wizzairmanager import WizzairPlugin
-from ryanair.RyanairManager import RyanairPlugin
 from common.ConfigurationManager import CfgMgr
 from common import LogManager as LogMgr
 from common.NewsletterManager import NewsletterManager
 from flight_scheduler.FlightScheduler import FlightScheduler
+
+from plugins.wizzair.wizzairmanager import WizzairPlugin
+from plugins.ryanair.RyanairManager import RyanairPlugin
+from plugins.norwegian.Manager import NorwegianPlugin
 
 class FlyDive():
     def __init__(self):
@@ -27,6 +29,9 @@ class FlyDive():
         if self.cfg['PLUGINS']['ryanair']=='on':
             self.enabled_airlines.append(self.flydivePluginManager.registerPlugin(RyanairPlugin))
 
+        if self.cfg['PLUGINS']['norwegian']=='on':
+            self.enabled_airlines.append(self.flydivePluginManager.registerPlugin(NorwegianPlugin))
+
     def setupLogger(self, cfg, dump_files):
         LogMgr.init(dump_files, dirname=cfg['config_dir'], configFileName=cfg['config_name'])
 
@@ -35,7 +40,6 @@ class FlyDive():
         parser.add_argument('-s', '--schedule', action='store_true', help='Run scheduler')
         parser.add_argument('-c','--config', help='JSON config file', default="configs/newsletter_db.json")
         parser.add_argument('-d', '--debug', action='store_true', help='dump files')
-        # parser.add_argument('-s', '--schedule', action='store_true', help='Init airports')
         args = parser.parse_args()
         return args
 
@@ -58,7 +62,7 @@ class FlyDive():
         # # Register all FlyDive plugins
         config = self.flydiveScheduler.getScheduleConfiguration(newsletter_CfgList)
 
-        if not self.args.schedule:
+        if self.args.schedule:
             self.flydivePluginManager.start(flightTree, connectionList, config)
 
         scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config, newsletter_CfgList)

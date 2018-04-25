@@ -57,6 +57,28 @@ class DatabaseManager(object):
     def log(self, message):
         lm.debug("DatabaseManager: {0}".format(message))
 
+    def addAirports(self, airports):
+        """TODO: Docstring for addAirport.
+
+        :airport: TODO
+        :returns: TODO
+
+        """
+        for airport in airports:
+            if not isinstance(airport, Airport):
+                raise TypeError('airport is not type of Airport.')
+
+            airport_exist = self.__exists(airport, { 'iata': airport.iata })
+            if not airport_exist:
+                self.log("Added airport: IATA - {0}".format(airport.iata))
+                self.__add(airport)
+            else:
+                self.log("Airport {0} already exists in DB. Updateing".format(airport.iata))
+                if not airport_exist.latitude and not airport_exist.longitude:
+                    airport_exist.latitude = airport.latitude
+                    airport_exist.longitude = airport.longitude
+        self.session.commit()
+
     def addAirport(self, airport):
         """TODO: Docstring for addAirport.
 
@@ -77,6 +99,31 @@ class DatabaseManager(object):
                 airport_exist.latitude = airport.latitude
                 airport_exist.longitude = airport.longitude
                 self.session.commit()
+
+    def addConnections(self, connections):
+        """Add connection to the database.
+
+        :connection: Connections object from DatabaseModel
+        :returns: connection ID
+        """
+        for connection in connections:
+            if not isinstance(connection, Connections):
+                raise TypeError('connection is not object of Connections.')
+            airports_exists = self.__exists(Airport(), { 'iata': connection.src_iata })!= None \
+            and self.__exists(Airport(),{ 'iata': connection.dst_iata})!=None
+
+            if airports_exists:
+                inDb = self.__exists(connection, { 'src_iata': connection.src_iata, 'dst_iata': connection.dst_iata,
+                                                  'carrierCode': connection.carrierCode })
+
+                if not inDb:
+                    self.log("Add connection from {0} to {1}".format(connection.src_iata, connection.dst_iata))
+                    self.__add(connection)
+                else:
+                    self.log("Connection from {0} to {1} exists in DB".format(connection.src_iata, connection.dst_iata))
+
+        self.session.commit()
+
 
     def addConnection(self, connection):
         """Add connection to the database.
@@ -234,6 +281,10 @@ class DatabaseManager(object):
         """
         Base.metadata.create_all(self.engine)
 
+    def __add(self, data):
+        self.session.add(data)
+        return data
+
     def __addAndCommit(self, data):
         """TODO: Docstring for __addAndCommit.
 
@@ -275,18 +326,20 @@ class DatabaseManager(object):
         data = self.session.query(type(entry)).filter_by(**filtered_by).first()
         return data
 
-    def getStatistics(self, IATA):
-        data = self.session.query(Statistics).filter(Statistics.airline_code==IATA).first()
-        return data
+    def getStatistics(self, airlineCode):
+        data = self.session.query(Statistics).filter(Statistics.airline_code==airlineCode).all()
+        if len(data):
+            return data[0]
+        return None
 
-    def addStatistics(self, statistics):
+    def addStatistics(self, statistics, airlineCode):
         if not isinstance(statistics, Statistics):
             raise TypeError("not statistics object")
 
-        data = self.exists(statistics)
+        data = self.getStatistics(airlineCode)
         if data:
-            data.airportCount = statistics.airportCount
-            data.connectionCount = statistics.connectionCount
+            data.airportCount = data.airportCount if statistics.airportCount is None else statistics.airportCount
+            data.connectionCount = data.connectionCount if statistics.connectionCount is None else statistics.connectionCount
         else:
             self.session.add(statistics)
         self.session.commit()

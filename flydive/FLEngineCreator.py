@@ -19,7 +19,7 @@ from common.FLPlugin import FLPlugin
 from time import sleep
 from monthdelta import monthdelta
 
-class FLEngineCreator(FLPlugin):
+class FLEngineCreator():
 
     """Docstring for FLEngineCreator. """
 
@@ -260,16 +260,17 @@ class FLEngineCreator(FLPlugin):
         statistics = self.db.getStatistics(self.carrierCode)
         
         if statistics:
-            statistics.airportCount == len(airports)
-            self.log("Statistics: skip adding airports.")
-            return
+            if statistics.airportCount == len(airports):
+                self.log("Statistics: skip adding airports.")
+                return
 
         for airport in airports:
-            # if not self.db.exists(airport):
+        #     # if not self.db.exists(airport):
             airport = self.geo_name.getGeoData(airport)
-            self.db.addAirport(airport)
+        self.db.addAirports(airports)
 
         self.statistics.airportCount = len(airports)
+        self.db.addStatistics(self.statistics, self.carrierCode)
 
     def __fetchAndAddConnections(self):
         """TODO: Docstring for getConnections.
@@ -278,21 +279,21 @@ class FLEngineCreator(FLPlugin):
         """
         self.log("Fetch and add connections")
         addedToDb = False
-        # testFilter = self.__generateConnections()
-
         connectionList = []
-        for connectionsFromAirport in self.dlMgr.getConnections():
-            connectionList.extend(self.parser.extractJSONConnectionToList(connectionsFromAirport))
+        
+        connectionList = self.parser.extractJSONConnectionToList(self.dlMgr.getConnections())
 
         statistics = self.db.getStatistics(self.carrierCode)
         if statistics:
-            statistics.connectionCount == len(connectionList)
-            self.log("Statistics: skip adding connections.")
-            return False
+            if statistics.connectionCount == len(connectionList):
+                self.log("Statistics: skip adding connections.")
+                return
 
-        self.__addConnections(connectionList)
+        self.db.addConnections(connectionList)
+        # self.__addConnections(connectionList)
         self.statistics.connectionCount = len(connectionList)
-        self.db.addStatistics(self.statistics)
+        self.statistics.airportCount = statistics.airportCount
+        self.db.addStatistics(self.statistics, self.carrierCode)
 
     def __addConnections(self, connectionList, filter_by = {}):
         for c in connectionList:

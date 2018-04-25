@@ -1,43 +1,21 @@
 [
 	{
 		"config": {
-			"mode": 1,
-			"start": "2017-07-07",
-			"end": "2017-07-24",
-			"time_start": "15:00:00",
-			"time_end": "11:00:00",
-			"days": 7,
-			"max_changes": 3,
-			"flex_time": 0,
-			"max_change_time": 12,
-			"email": [
-			  "patryk.lukasz.gorniak@gmail.com"
-			]
-		},
-		"departure": ["WRO"],
-		"arrival" : ["LUT",
-			"STN"
-		]
-	},
-	{
-		"config": {
 			"mode": 0,
-			"start": "2017-07-07",
-			"end": "2017-07-24",
-			"time_start": "15:00:00",
-			"time_end": "11:00:00",
+			"start": "2018-08-19",
+			"end": "2018-08-26",
+			"time_start": "09:00:00",
+			"time_end": "23:00:00",
 			"days": 7,
-			"max_changes": 3,
-			"flex_time": 3,
-			"max_change_time": 12,
-			"name": "UK_2",
+			"max_changes": 2,
+			"flex_time": 0,
+			"max_change_time": 24,
+			"name": "Gruzja",
 			"email": [
 			  "patryk.lukasz.gorniak@gmail.com"
 			]
 		},
-		"departure": ["WRO"],
-		"arrival" : ["LUT",
-			"STN"
-		]
+		"departure": ["WRO", "KTW", "WAW"],
+		"arrival" : ["KUT"]
 	}
 ]
