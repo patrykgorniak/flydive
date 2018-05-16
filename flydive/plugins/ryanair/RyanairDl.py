@@ -8,7 +8,7 @@ class RyanairDl():
     """Docstring for RyanairDl. """
 
     def __init__(self):
-        self.apikey = "gCUKLGIa2t94BtZrpIdHAmW7p7Tac5qH"
+        self.apikey = "YourApiKey"
         self.s_iata = ""
         self.d_iata = ""
         self.date = datetime.date.min
