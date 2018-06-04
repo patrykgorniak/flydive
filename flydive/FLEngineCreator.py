@@ -115,7 +115,6 @@ class FLEngineCreator():
             else:
                 months = int(((date_to - date_from).days)/30) + 2
             for delta in range(months):
-                
                 time = date_from + monthdelta(delta)
 
                 timeTableList = self.__getTimeTable(time, self.connections[idx]) #get timetable for given year-month
@@ -159,6 +158,7 @@ class FLEngineCreator():
         self.log('Connection: {0}'.format(connection))
         details = {'src_iata': connection.src_iata,
                    'dst_iata': connection.dst_iata,
+                   'day' : date.day,
                    'month': date.month,
                    'year': date.year
                    }
