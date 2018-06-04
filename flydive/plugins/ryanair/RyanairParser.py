@@ -109,9 +109,13 @@ class RyanairParser():
         assert len(JSONTimeTable['from']) == len(JSONTimeTable['to'])
 
         timeTableList = []
+        
         for flight in JSONTimeTable['from']:
-            timeTable = TimeTable(flightDetails['src_iata'], flightDetails['dst_iata'], datetime.datetime.strptime(flight,'%Y-%m-%d'))
-            timeTableList.append(timeTable)
+            date = datetime.datetime.strptime(flight,'%Y-%m-%d')
+            if date.date() >= datetime.date(int(flightDetails['year']), int(flightDetails['month']), int(flightDetails['day'])):
+                if len(timeTableList) == 0 or (len(timeTableList) > 0 and timeTableList[-1].date + datetime.timedelta(days=RyanairData.FlexDays) < date):
+                    timeTable = TimeTable(flightDetails['src_iata'], flightDetails['dst_iata'], date)
+                    timeTableList.append(timeTable)
 
         return timeTableList
 

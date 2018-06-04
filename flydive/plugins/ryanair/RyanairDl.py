@@ -16,17 +16,17 @@ class RyanairDl():
 
     def getAirports(self):
         url = self.__attachCredentials(RyanairData.CommonData.AIRPORTS)
-        airports_text = HttpMgr.getMethod(url).text
+        airports_text = HttpMgr.getMethod(url, tries = 10).text
         json_data = json.loads(airports_text)
         return json_data
 
     def getConnections(self):
         url = self.__attachCredentials(RyanairData.CommonData.CONNECTIONS)
-        connections_text = HttpMgr.getMethod(url).text
+        connections_text = HttpMgr.getMethod(url, tries = 10).text
         json_data = json.loads(connections_text)
         return json_data
 
-    def getTimeTable(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"" }):
+    def getTimeTable(self, details = { "src_iata": "", "dst_iata":"", "year":"", "month":"", 'day': "" }):
 
         src_iata = details['src_iata']
         dst_iata = details['dst_iata']
@@ -41,8 +41,8 @@ class RyanairDl():
         url_from = url.format(src_iata, dst_iata )
         url_back = url.format(dst_iata, src_iata )
 
-        httpContent_from = HttpMgr.getMethod(url_from).text
-        httpContent_to = HttpMgr.getMethod(url_back).text
+        httpContent_from = HttpMgr.getMethod(url_from, tries = 10).text
+        httpContent_to = HttpMgr.getMethod(url_back, tries = 10).text
 
         self.timetable  = { "from": json.loads(httpContent_from), "to": json.loads(httpContent_to) }
         
@@ -54,7 +54,7 @@ class RyanairDl():
     def prepareUrl(self, flight):
         url = RyanairData.CommonData.Search
 #         url = self.__attachCredentials(RyanairData.CommonData.Search)
-        url = self.__attachCredentials(url.format(flight.src, flight.dst, flight.date.date(), flight.date.date()))
+        url = self.__attachCredentials(url.format(flight.src, flight.dst, flight.date.date(), flight.date.date() + datetime.timedelta(days=1)))
         return url
 
     def __attachCredentials(self, url):
