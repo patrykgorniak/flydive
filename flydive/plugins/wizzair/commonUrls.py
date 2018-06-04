@@ -24,3 +24,4 @@ class CommonData():
 
 carrierCode = 'W6'
 airline_name = 'Wizz Air'
+REQUESTS_PER_SEC = 150
