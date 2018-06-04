@@ -8,6 +8,7 @@ from common.ConfigurationManager import CfgMgr
 import random
 import time
 import sys, os
+from time import sleep
 
 class DownloadThread(Thread):
     """Docstring for DownloadManager. """
@@ -44,7 +45,7 @@ class DownloadThread(Thread):
 
     def worker(self, i, q):
         lm.debug("Created {}".format(i))
-        limit = 10
+        limit = 5
         while True:
             counter = 0
             task = q.get()
@@ -69,6 +70,7 @@ class DownloadThread(Thread):
                     if method == 0:
                         # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.getMethod(task['url'], proxy)
+                        sleep(counter*1)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
@@ -78,6 +80,7 @@ class DownloadThread(Thread):
                     else:
                         # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.postMethod(task['url'], task['params'], proxy)
+                        sleep(counter*1)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
