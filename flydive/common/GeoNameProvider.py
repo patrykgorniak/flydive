@@ -9,7 +9,7 @@ class GeoNameProvider():
     def __init__(self):
         self.cfg = CfgMgr().getConfig()
         self.user = self.cfg["GEO_NAME_PROVIDER"]["user"]
-        self.url_base = "http://ws.geonames.org/countryCodeJSON?lat={}&lng={}&radius=60&username={}"
+        self.url_base = "http://api.geonames.org/countryCode?type=JSON&lat={}&lng={}&radius=60&username={}"
         self.url_base2 = "http://api.geonames.org/searchJSON?name={}&username={}"
         self.currencyProvider = CurrencyProvider.getCurrencyProvider()
 
