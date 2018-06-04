@@ -37,7 +37,7 @@ class FlyDive():
 
     def initArgParser(self):
         parser = argparse.ArgumentParser(description="Flydive - help")
-        parser.add_argument('-s', '--schedule', action='store_true', help='Run scheduler')
+        parser.add_argument('-r', '--refresh', action='store_true', help='Fetch data from servers.')
         parser.add_argument('-c','--config', help='JSON config file', default="configs/newsletter_db.json")
         parser.add_argument('-d', '--debug', action='store_true', help='dump files')
         args = parser.parse_args()
@@ -46,7 +46,7 @@ class FlyDive():
     def main(self):
         self.registerPlugins()
 
-        if not self.args.schedule:
+        if self.args.refresh:
             self.flydivePluginManager.initAirports()
             self.flydivePluginManager.initConnections()
 
@@ -62,7 +62,7 @@ class FlyDive():
         # # Register all FlyDive plugins
         config = self.flydiveScheduler.getScheduleConfiguration(newsletter_CfgList)
 
-        if self.args.schedule:
+        if self.args.refresh:
             self.flydivePluginManager.start(flightTree, connectionList, config)
 
         scheduledFlights = self.flydiveScheduler.collectFlighDetails(flightTree, config, newsletter_CfgList)
