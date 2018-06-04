@@ -1,4 +1,5 @@
 MonthDelta==0.9.1
+pkg-resources==0.0.0
 PyMySQL==0.7.10
 pyprof2calltree==1.4.0
 ratelimit==2.2.0
