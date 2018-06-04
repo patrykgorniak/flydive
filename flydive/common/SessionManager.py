@@ -100,7 +100,7 @@ class SessionManager(object):
 
         """
         if os.path.exists(self.full_path):
-            with open(self.full_path, 'r') as f:
+            with open(self.full_path, 'r', encoding="utf-8") as f:
                 content = f.read()
                 f.close()
                 array = json.loads(content, cls=SessionDecoder)
@@ -113,7 +113,7 @@ class SessionManager(object):
         """
         encoded = json.dumps(obj, cls=SessionEncoder)
         print(self.full_path)
-        with open(self.full_path, 'w') as f:
+        with open(self.full_path, 'w', encoding="utf-8") as f:
             f.write(encoded)
             f.close()
 

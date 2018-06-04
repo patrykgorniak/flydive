@@ -25,7 +25,7 @@ class Currency():
 class CurrencyProvider:
     def __init__(self):
         self.dir = os.path.dirname(__file__)
-        self.file_data = open(os.path.join(self.dir, "currencies.json") ,'r').read()
+        self.file_data = open(os.path.join(self.dir, "currencies.json") ,'r', encoding="utf-8").read()
         self.currency_db = json.loads(self.file_data)
         self.baseCurrencySymbol = "PLN"
 

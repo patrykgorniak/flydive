@@ -374,7 +374,7 @@ class FlightScheduler():
 
     def dumpToFile(self, fileName, data):
         if lm.dump_files():
-            with open(os.path.join(self.log_dir, fileName),'w') as f:
+            with open(os.path.join(self.log_dir, fileName),'w', encoding="utf-8") as f:
                 json.dump(data, f, cls=tools.FLJsonEncoder, indent=4)
             f.close()
 

@@ -21,7 +21,7 @@ class CfgMgr:
                 self.__instance = self.__init()
             else:
                 config = configparser.ConfigParser()
-                config.read(self.path)
+                config.read(self.path, encoding='utf-8')
                 self.__instance = config
 
 
