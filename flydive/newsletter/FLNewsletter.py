@@ -7,8 +7,8 @@ class FLNewsletter():
         self.generator = FLHtmlGenerator()
 
     def sendEmail(self, emailList, attachmentList):
-        message = "Szczegóły znalezionych lotów znajdziesz w załącznikach."
-        title = "Raport lotów z aplikacji Flydive"
+        message = "Szczegoly znalezionych lotow znajdziesz w zalacznikach."
+        title = "Raport lotow z aplikacji Flydive"
         attachments = "-a "
         attachments += " -a ".join(attachmentList)
         emails = " ".join(emailList)
