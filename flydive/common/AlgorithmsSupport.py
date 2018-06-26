@@ -2,8 +2,11 @@ import sys
 from collections import deque
 
 def BFS(graph, depth, start, end):
-    q = deque() #MyQUEUE() # now we make a queue
     paths = []
+    if start and end not in graph:
+        return paths
+    
+    q = deque()
     temp_path = [start]
     q.append(temp_path)
 

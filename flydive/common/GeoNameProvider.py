@@ -4,6 +4,7 @@ from common.ConfigurationManager import CfgMgr
 from common import LogManager as lm
 from common import HttpManager
 import common.CurrencyProvider as CurrencyProvider
+from common.IATADataProvider import IATADataProvider as IATAProvider
 
 class GeoNameProvider():
     def __init__(self):
@@ -12,26 +13,29 @@ class GeoNameProvider():
         self.url_base = "http://api.geonames.org/countryCode?type=JSON&lat={}&lng={}&radius=60&username={}"
         self.url_base2 = "http://api.geonames.org/searchJSON?name={}&username={}"
         self.currencyProvider = CurrencyProvider.getCurrencyProvider()
+        self.iataData = IATAProvider().loadData("./data/airports.dat")
+
 
     def log(self, message=''):
         lm.debug("GeoNameProvider: {0}".format(message))
 
     def getGeoData(self, airport): #geo_position = {"lat": 0, "long": 0, "name": "" }):
-        lat = airport.latitude #geo_position['lat']
-        long = airport.longitude #geo_position['long']
-        name = airport.name #geo_position['name']
+        # lat = airport.latitude #geo_position['lat']
+        # long = airport.longitude #geo_position['long']
+        # name = airport.name #geo_position['name']
 
-        if lat is None or long is None:
-            name = re.sub(r' \(.*\)','',name)
-            url = self.url_base2.format(name, self.user)
-            json_data = self.searchByName(url)
-            airport.latitude = json_data['lat'] if 'lat' in json_data else None
-            airport.longitude = json_data['lng'] if 'lng' in json_data else None
-        else:
-            url = self.url_base.format(lat, long, self.user)
-            json_data = self.searchByGeo(url)
+        # if lat is None or long is None:
+        #     name = re.sub(r' \(.*\)','',name)
+        #     url = self.url_base2.format(name, self.user)
+        #     json_data = self.searchByName(url)
+        #     airport.latitude = json_data['lat'] if 'lat' in json_data else None
+        #     airport.longitude = json_data['lng'] if 'lng' in json_data else None
+        # else:
+        #     url = self.url_base.format(lat, long, self.user)
+        #     json_data = self.searchByGeo(url)
         
-        self.log("REQ: {} \nRESP: {} ".format(url, json_data))
+        # self.log("REQ: {} \nRESP: {} ".format(url, json_data))
+        json_data = self.iataData[airport.iata]
 
         currency = self.getCurrencyInfo(json_data['countryName'])
         json_data['currencyCode'] = currency.currencyCode
@@ -39,7 +43,7 @@ class GeoNameProvider():
         json_data['currencyNumber'] = currency.currencyNumber
 
         airport.country_name    = json_data['countryName']
-        airport.country_code    = json_data['countryCode']
+        airport.country_code    = 0 #json_data['countryCode']
         airport.currency_code   = json_data['currencyCode']
         airport.currency_name   = json_data['currencyName']
         airport.currency_number = json_data['currencyNumber']
