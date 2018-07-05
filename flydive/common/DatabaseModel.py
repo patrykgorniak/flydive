@@ -1,7 +1,7 @@
 import sqlite3
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, Date, Boolean, func, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, Date, Boolean, func, ForeignKey, Float, create_engine, Table
+
 from sqlalchemy.orm import sessionmaker, relationship
 import copy
 
@@ -114,54 +114,88 @@ class FlightDetails(Base, Helper):
                                                                                   self.dst_iata,
                                                                                   self.inDC,
                                                                                   self.availableCount)
+user_newsletter_table = Table('user_newsletter', Base.metadata,
+                          Column('newsletter_id', Integer, ForeignKey('newsletter.id')),
+                          Column('airport_iata', String(10), ForeignKey('airport.iata'))
+                          )
 class User(Base, Helper):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     login = Column(String(100), nullable = False)
     password = Column(String(100), nullable = False)
     fullname = Column(String(100), nullable = False)
-    surname = Column(String(100), nullable = False)
     email = Column(String(150), nullable = False)
+    newsletter = relationship("Newsletter", back_populates="user")
 
     def __str__(self):
         return "User: Login: {}, Name: {} {}, E-Mail: {}\n".format(
             self.login,
             self.fullname,
-            self.surname,
+            self.surname, 
             self.email )
 
-class WatchFlight(Base, Helper):
-    __tablename__ = 'watchFlight'
-
-    id = Column(Integer, primary_key=True)
-    src_iata = Column(String(10),ForeignKey('airport.iata'))
-    dst_iata = Column(String(10),ForeignKey('airport.iata'))
-
+class Newsletter(Base, Helper):
+    __tablename__ = 'newsletter'
+    id = Column(Integer, primary_key=True) 
+    user_id = Column(Integer, ForeignKey('user.id'))
+    name = Column(String(100), nullable = False)
+    departure_datetime = Column(DateTime, nullable=False)
+    arrival_datetime = Column(DateTime, nullable=False)
+    days = Column(Integer, nullable=True)
+    max_changes = Column(Integer, nullable=True)
+    flex_time_d = Column(Integer, nullable=True)
+    max_change_time_h = Column(Integer, nullable=True)
+    user = relationship("User", lazy='joined', back_populates = "newsletter")
+    departures = relationship("Airport", secondary=user_newsletter_table)
+    arrivals = relationship("Airport", secondary=user_newsletter_table)
+    
     def __str__(self):
-        return "WatchDirections: ID: {}, src_iata: {}, dst_iata: {}\n".format(self.id,
-                                                                              self.src_iata,
-                                                                              self.dst_iata)
+        return "Newsletter: Name: {}, Start: {}, End: {}\n".format(
+        self.name,
+        self.departure_datetime,
+        self.arrival_datetime )
 
-class WatchConfig(Base, Helper):
-    __tablename__ = 'watchConfig'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    watchFlight_id = Column(Integer, ForeignKey('watchFlight.id'))
-    mode = Column(Integer, nullable = False)
-    datetime_start = Column(DateTime, nullable=False)
-    datetime_end = Column(DateTime, nullable=False)
-    days = Column(Integer, nullable=False)
 
-    def __str__(self):
-        return "WatchConfig: ID: {}, User_ID: {}, WatchFlight_ID: {}, mode: {}, \
-                datatime_start: {}, datetime_end {}, days: {}".format(
-                    self.id,
-                    self.user_id,
-                    self.watchFlight_id,
-                    self.mode,
-                    self.datetime_start,
-                    self.datetime_end,
-                    self.days )
+# class UserNewsletter(Base, Helper):
+#     __tablename__ = "user_newsletter"
+#     user_id = Column(Integer, ForeignKey('users.id'), nullable = False)
+#     newsletter_id = Column(Integer, ForeignKey('newsletter.id'), nullable = False)
+#     users = relationship("User", lazy='joined', back_populates = "newsletter")
+
+
+
+# class WatchFlight(Base, Helper):
+#     __tablename__ = 'watchFlight'
+
+#     id = Column(Integer, primary_key=True)
+#     src_iata = Column(String(10),ForeignKey('airport.iata'))
+#     dst_iata = Column(String(10),ForeignKey('airport.iata'))
+
+#     def __str__(self):
+#         return "WatchDirections: ID: {}, src_iata: {}, dst_iata: {}\n".format(self.id,
+#                                                                               self.src_iata,
+#                                                                               self.dst_iata)
+
+# class WatchConfig(Base, Helper):
+#     __tablename__ = 'watchConfig'
+#     id = Column(Integer, primary_key=True)
+#     user_id = Column(Integer, ForeignKey('users.id'))
+#     watchFlight_id = Column(Integer, ForeignKey('watchFlight.id'))
+#     mode = Column(Integer, nullable = False)
+#     datetime_start = Column(DateTime, nullable=False)
+#     datetime_end = Column(DateTime, nullable=False)
+#     days = Column(Integer, nullable=False)
+
+#     def __str__(self):
+#         return "WatchConfig: ID: {}, User_ID: {}, WatchFlight_ID: {}, mode: {}, \
+#                 datatime_start: {}, datetime_end {}, days: {}".format(
+#                     self.id,
+#                     self.user_id,
+#                     self.watchFlight_id,
+#                     self.mode,
+#                     self.datetime_start,
+#                     self.datetime_end,
+#                     self.days )
 
 class Statistics(Base, Helper):
     __tablename__ = 'statistics'

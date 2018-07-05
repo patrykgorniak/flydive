@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from sqlalchemy_utils import database_exists
-from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base, Statistics
+from common.DatabaseModel import Airline, Airport, Connections, FlightDetails, Base, Statistics, User, Newsletter
 from datetime import datetime
 from common import LogManager as lm
 
