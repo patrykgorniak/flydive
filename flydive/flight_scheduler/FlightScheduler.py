@@ -25,6 +25,7 @@ class FlightScheduler():
         self.search_depth = int(self.cfg['FLIGHT_SEARCH']['search_depth'])
         self.excluded_cities = json.loads(self.cfg['FLIGHT_SEARCH']['excluded_cities'])
         self.currencyProvider = CurrencyProvider()
+        self.max_ret = 8
 
         # READ CONFIG DATA
         self.db = DatabaseManager(self.cfg['DATABASE']['name'],
@@ -254,7 +255,7 @@ class FlightScheduler():
 
         # sortedFlights = sorted(sortedFlights, key=operator.itemgetter(1))
         sortedFlights = sorted(sortedFlights, key= lambda k: k['flightTimeInH'])
-        sortedFlights = sortedFlights[0:5] if len(sortedFlights) > 5 else sortedFlights
+        sortedFlights = sortedFlights[0:self.max_ret] if len(sortedFlights) > self.max_ret else sortedFlights
 
         return sortedFlights
 
@@ -312,7 +313,7 @@ class FlightScheduler():
 
             sortedFlights.append({ "arrival_DateTime": ret_time, "departure_DateTime": dep_time, 'price': round(price, 2), 'flightList': flightSet, 'currency': self.currencyProvider.baseCurrencySymbol})
             sortedFlights = sorted(sortedFlights, key= lambda k: k['price'] )
-        return sortedFlights[0:5] if len(sortedFlights) > 5 else sortedFlights
+        return sortedFlights[0:self.max_ret] if len(sortedFlights) > self.max_ret else sortedFlights
 
     def getPriceInBaseCurrency(self, price, currency):
         currencySymbol = currency
