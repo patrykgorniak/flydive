@@ -25,7 +25,6 @@ class FlightScheduler():
         self.search_depth = int(self.cfg['FLIGHT_SEARCH']['search_depth'])
         self.excluded_cities = json.loads(self.cfg['FLIGHT_SEARCH']['excluded_cities'])
         self.currencyProvider = CurrencyProvider()
-        self.max_ret = 8
 
         # READ CONFIG DATA
         self.db = DatabaseManager(self.cfg['DATABASE']['name'],

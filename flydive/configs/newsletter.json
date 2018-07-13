@@ -3,19 +3,19 @@
 		"config": {
 			"mode": 0,
 			"start": "2018-08-19",
-			"end": "2018-08-26",
+			"end": "2018-08-29",
 			"time_start": "09:00:00",
 			"time_end": "23:00:00",
-			"days": 7,
+			"days": 10,
 			"max_changes": 2,
-			"flex_time": 0,
-			"max_change_time": 24,
-			"name": "Gruzja",
+			"flex_time": 3,
+			"max_change_time": 28,
+			"name": "Malaga",
 			"email": [
 			  "patryk.lukasz.gorniak@gmail.com"
 			]
 		},
-		"departure": ["WRO", "KTW", "WAW"],
-		"arrival" : ["KUT"]
+		"departure": ["WRO"],
+		"arrival" : ["AGP"]
 	}
 ]

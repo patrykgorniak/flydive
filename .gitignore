@@ -1,1 +1,5 @@
 tests/wizzair/testdata/*
+tags
+*.sqlite
+*__pycache__*
+*.sqlite*

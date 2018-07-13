@@ -11,10 +11,11 @@ class NorwegianParser(ParserIface):
         airportList = []
 
         for elem in airports:
-            airport = Airport(iata = elem['code'],
-                              name = elem['displayName']
-                              )
-            airportList.append(airport)
+            if elem['code'][-3:] != "ALL":
+                airport = Airport(iata = elem['code'],
+                                  name = elem['displayName']
+                                  )
+                airportList.append(airport)
 
         return airportList
 
