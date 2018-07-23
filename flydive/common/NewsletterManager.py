@@ -7,14 +7,14 @@ class NewsletterManager():
     def __init__(self, newsletter_file = "configs/newsletter_db.json"):
         self.path = newsletter_file
         # self.path = os.path.join("configs", self.filename)
-        with open(self.path) as file:
-            self.configs = json.load(file , object_hook=self.date_hook)
+        #with open(self.path) as file:
+            #self.configs = json.load(file , object_hook=self.date_hook)
 
-        with open(os.path.join("configs", self.path)) as file:
+        with open(self.path) as file:
             self.newsletterCfg = json.load(file , object_hook=self.date_hook)
 
     def get(self):
-        return self.configs
+        return self.newsletterCfg
 
     def date_hook(self, json_dict):
         for (key, value) in json_dict.items():
