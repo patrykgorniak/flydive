@@ -10,7 +10,7 @@ class NewsletterManager():
         with open(self.path) as file:
             self.configs = json.load(file , object_hook=self.date_hook)
 
-        with open(os.path.join("configs", "newsletter.json")) as file:
+        with open(os.path.join("configs", self.path)) as file:
             self.newsletterCfg = json.load(file , object_hook=self.date_hook)
 
     def get(self):
