@@ -70,24 +70,21 @@ class DownloadThread(Thread):
                     if method == 0:
                         # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.getMethod(task['url'], proxy)
-                        sleep(counter*1)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
                         else:
                             lm.debug("Request error for: {} {}".format(task['url'], proxy))
-                            os._exit(1)
                     else:
                         # time.sleep(random.randrange(3, 12))
                         httpContent = HttpManager.postMethod(task['url'], task['params'], proxy)
-                        sleep(counter*1)
                         if httpContent is not None:
                             ret_q.put({'data':json.loads(httpContent.text), 'url': task['url'] } )
                             break
                         else:
                             lm.debug("Request error for: {} {}".format(task['url'], proxy))
-                            os._exit(1)
                     counter = counter + 1
+                    sleep(counter * 2)
 
             q.task_done()
 
