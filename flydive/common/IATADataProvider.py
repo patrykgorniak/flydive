@@ -13,7 +13,7 @@ class IATADataProvider():
 
         """
         airportList = {}
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding='utf-8') as file:
             airportData = file.readlines()
             for airport in airportData:
                 aSplit = airport.replace('"',"").split(',')
